@@ -1,0 +1,53 @@
+{
+  "name": "yfm-editor",
+  "private": true,
+  "version": "0.2.0",
+  "description": "Native macOS editor for Markdown / YFM files, built on @gravity-ui/markdown-editor and Tauri 2.",
+  "license": "MIT",
+  "author": "Alexey Melekhin",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alxmelekhin/yfm-editor.git"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "app": "tauri dev",
+    "app:build": "tauri build"
+  },
+  "dependencies": {
+    "@diplodoc/cut-extension": "^1.1.1",
+    "@diplodoc/file-extension": "^0.2.1",
+    "@diplodoc/folding-headings-extension": "^0.1.2",
+    "@diplodoc/html-extension": "^2.9.1",
+    "@diplodoc/latex-extension": "^1.4.1",
+    "@diplodoc/mermaid-extension": "^1.4.0",
+    "@diplodoc/quote-link-extension": "^0.1.3",
+    "@diplodoc/tabs-extension": "^3.7.5",
+    "@diplodoc/transform": "^4.64.1",
+    "@gravity-ui/components": "^4.22.0",
+    "@gravity-ui/markdown-editor": "^15.42.0",
+    "@gravity-ui/markdown-editor-latex-extension": "^0.1.0",
+    "@gravity-ui/uikit": "^7.43.0",
+    "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/plugin-dialog": "^2.7.1",
+    "highlight.js": "^11.11.1",
+    "katex": "^0.16.47",
+    "lowlight": "^3.3.0",
+    "markdown-it": "^13.0.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.11.4",
+    "@types/node": "^20.19.43",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  }
+}

@@ -1,0 +1,87 @@
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.main__editor {
+  /* Roomier gutters; inner editor/preview inherit this custom property. */
+  --g-md-editor-padding: 24px;
+
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* The search popup (both its compact and expanded "search & replace" views) is
+ * anchored to the top of the sticky toolbar and rendered in a portal whose
+ * positioning wrapper carries an inline z-index of 1000, so it ends up both
+ * behind the toolbar (z-index: 2000) and overlapping it. Targeting the wrapper
+ * (the direct parent of the popup content) lets us fix both at once, uniformly
+ * for either view:
+ *   - lift it above the toolbar, and
+ *   - push it down past the toolbar so it no longer overlaps.
+ * !important is required to beat the wrapper's inline styles. */
+:has(> .g-md-search-popup) {
+  z-index: 2100 !important;
+  margin-block-start: 34px !important;
+}
+
+/* Status bar: shows the directory of the open file so same-named files in
+ * different folders are distinguishable at a glance. */
+.statusbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 2px 12px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--g-color-text-secondary);
+  background: var(--g-color-base-generic);
+  border-top: 1px solid var(--g-color-line-generic);
+}
+
+.statusbar__path {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  /* Truncate from the left so the deepest (most specific) folder stays visible. */
+  direction: rtl;
+  text-align: left;
+}
+
+.statusbar__path_muted {
+  direction: ltr;
+  opacity: 0.7;
+}
+
+/* Split-mode preview */
+.preview {
+  padding: 16px;
+  overflow: auto;
+}
+
+/* Preferences modal */
+.prefs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  min-width: 360px;
+}
+
+.prefs__row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
