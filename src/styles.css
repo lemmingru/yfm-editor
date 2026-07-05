@@ -71,6 +71,40 @@ body,
   overflow: auto;
 }
 
+/* Dark YFM/code theme: the bundled highlight palette is tuned for light UI,
+ * so code blocks otherwise inherit low-contrast token colors on dark surfaces. */
+body.g-root_theme_dark .yfm {
+  --yfm-color-inline-code: #9fbad7;
+  --yfm-color-inline-code-background: #303440;
+  --yfm-color-code-background: #20232b;
+  --yfm-color-code-hovered-background: #2b303a;
+  --yfm-color-hljs-background: #20232b;
+  --yfm-color-hljs-subst: #d7dae0;
+  --yfm-color-hljs-comment: #8b95a5;
+  --yfm-color-hljs-deletion: #ff7b72;
+  --yfm-color-hljs-section: #d2a8ff;
+  --yfm-color-hljs-pseudo: #79c0ff;
+  --yfm-color-hljs-literal: #ffa657;
+  --yfm-color-hljs-addition: #7ee787;
+  --yfm-color-hljs-meta: #a5d6ff;
+  --yfm-color-hljs-meta-string: #a5d6ff;
+  --yfm-color-line-numbers: #768390;
+}
+
+body.g-root_theme_dark .yfm pre > code,
+body.g-root_theme_dark .yfm .hljs {
+  color: var(--yfm-color-hljs-subst);
+}
+
+body.g-root_theme_dark .yfm .hljs-keyword,
+body.g-root_theme_dark .yfm .hljs-attribute,
+body.g-root_theme_dark .yfm .hljs-selector-tag,
+body.g-root_theme_dark .yfm .hljs-meta-keyword,
+body.g-root_theme_dark .yfm .hljs-doctag,
+body.g-root_theme_dark .yfm .hljs-name {
+  color: #ff7b72;
+}
+
 /* Preferences modal */
 .prefs {
   display: flex;
