@@ -12,6 +12,8 @@ import '@diplodoc/cut-extension/runtime/styles.css';
 import '@diplodoc/tabs-extension/runtime/styles.css';
 // KaTeX / LaTeX styles (editor math nodes + split-preview formulas).
 import '@diplodoc/latex-extension/runtime/styles';
+// Mermaid zoom controls for diagrams rendered in split preview.
+import '@diplodoc/mermaid-extension/styles/zoom.css';
 
 import './styles.css';
 

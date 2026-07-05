@@ -11,19 +11,31 @@ import {
   latexInlineItemWysiwyg,
   latexListItemView,
 } from '@gravity-ui/markdown-editor-latex-extension/configs';
+import {
+  mermaidItemMarkup,
+  mermaidItemView,
+  mermaidItemWysiwyg,
+} from '@gravity-ui/markdown-editor/_/modules/toolbars/items.js';
+import {Mermaid} from '@gravity-ui/markdown-editor/extensions/additional/Mermaid/index.js';
 // The `full` preset ships every opensource toolbar button except the formula
-// (math/LaTeX) one, which the editor supports but leaves out of the default
-// layout. We extend it here so the formula button appears on the toolbar.
+// (math/LaTeX) and Mermaid ones, which the editor supports but leaves out of
+// the default layout. We extend it here so those buttons appear on the toolbar.
 import {full} from '@gravity-ui/markdown-editor/_/modules/toolbars/presets.js';
 import transform from '@diplodoc/transform';
 import defaultPlugins from '@diplodoc/transform/lib/plugins';
 import {transform as latexTransform} from '@diplodoc/latex-extension';
 import {useLatex} from '@diplodoc/latex-extension/react';
+import {transform as mermaidTransform} from '@diplodoc/mermaid-extension';
+import {useMermaid} from '@diplodoc/mermaid-extension/react';
 import type {EditingMode} from '../preferences';
 
-// Keep Diplodoc's full YFM support (including multiline tables) and add LaTeX.
+// Keep Diplodoc's full YFM support (including multiline tables) and add rich blocks.
 // `bundle`/`validate` are disabled because we render client-side (no file output).
-const previewPlugins = [...defaultPlugins, latexTransform({bundle: false, validate: false})];
+const previewPlugins = [
+  ...defaultPlugins,
+  latexTransform({bundle: false, validate: false}),
+  mermaidTransform({bundle: false}),
+];
 
 const wysiwygEscapeConfig: EscapeConfig = {
   // Preserve issue tags like [ЭКСП] / [ЛС] when WYSIWYG re-serializes markdown.
@@ -33,16 +45,17 @@ const wysiwygEscapeConfig: EscapeConfig = {
 // A formula dropdown (inline + block) placed right after the code button, so it
 // sits in the same group as `code`, mirroring Yandex Tracker's toolbar layout.
 const mathListOrder = {id: 'math', items: ['mathInline', 'mathBlock']};
+const mermaidOrder = 'mermaid';
 
-const withMath = (orders: ToolbarOrders): ToolbarOrders =>
+const withRichBlocks = (orders: ToolbarOrders): ToolbarOrders =>
   orders.map((group) =>
     group.some((item) => typeof item !== 'string' && item.id === 'code')
-      ? [...group, mathListOrder]
+      ? [...group, mathListOrder, mermaidOrder]
       : group,
   );
 
-// `full` gives us the standard toolbar; we register the math items/actions and
-// inject the formula button into both the WYSIWYG and markup main toolbars.
+// `full` gives us the standard toolbar; we register rich items/actions and
+// inject the formula and diagram buttons into both main toolbars.
 const toolbarsPreset: ToolbarsPreset = {
   items: {
     ...full.items,
@@ -57,11 +70,16 @@ const toolbarsPreset: ToolbarsPreset = {
       markup: latexBlockItemMarkup,
     },
     math: {view: latexListItemView},
+    mermaid: {
+      view: mermaidItemView,
+      wysiwyg: mermaidItemWysiwyg,
+      markup: mermaidItemMarkup,
+    },
   },
   orders: {
     ...full.orders,
-    wysiwygMain: withMath(full.orders.wysiwygMain),
-    markupMain: withMath(full.orders.markupMain),
+    wysiwygMain: withRichBlocks(full.orders.wysiwygMain),
+    markupMain: withRichBlocks(full.orders.markupMain),
   },
 };
 
@@ -70,6 +88,11 @@ const toolbarsPreset: ToolbarsPreset = {
 // (Styles are imported statically in main.tsx.)
 function loadLatexRuntime(): void {
   import('@diplodoc/latex-extension/runtime');
+}
+
+// Mermaid uses the same async JSONP pattern as the LaTeX extension.
+function loadMermaidRuntime(): void {
+  import('@diplodoc/mermaid-extension/runtime');
 }
 
 function renderHtml(markup: string): string {
@@ -81,14 +104,16 @@ function renderHtml(markup: string): string {
   }
 }
 
-/** Split-preview pane: renders YFM to HTML and hydrates LaTeX formulas via KaTeX. */
+/** Split-preview pane: renders YFM to HTML and hydrates rich client-side blocks. */
 function Preview({markup}: {markup: string}) {
   const ref = React.useRef<HTMLDivElement>(null);
   const html = React.useMemo(() => renderHtml(markup), [markup]);
   const runLatex = useLatex();
+  const runMermaid = useMermaid();
 
   React.useEffect(() => {
     loadLatexRuntime();
+    loadMermaidRuntime();
   }, []);
 
   React.useEffect(() => {
@@ -97,6 +122,13 @@ function Preview({markup}: {markup: string}) {
     const nodes = Array.from(el.querySelectorAll<HTMLElement>('.yfm-latex'));
     if (nodes.length) runLatex({nodes, throwOnError: false});
   }, [html, runLatex]);
+
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const nodes = Array.from(el.querySelectorAll<HTMLElement>('.mermaid'));
+    if (nodes.length) runMermaid({startOnLoad: false}, {nodes}).catch(() => {});
+  }, [html, runMermaid]);
 
   return <div ref={ref} className="yfm preview" dangerouslySetInnerHTML={{__html: html}} />;
 }
@@ -141,11 +173,15 @@ export function EditorPane({
     markupConfig: {renderPreview, splitMode: 'horizontal'},
     wysiwygConfig: {
       escapeConfig: wysiwygEscapeConfig,
-      extensions: (builder) =>
+      extensions: (builder) => {
         builder.use(LatexExtension, {
           loadRuntimeScript: loadLatexRuntime,
           katexOptions: {throwOnError: false},
-        }),
+        });
+        builder.use(Mermaid, {
+          loadRuntimeScript: loadMermaidRuntime,
+        });
+      },
     },
   });
 

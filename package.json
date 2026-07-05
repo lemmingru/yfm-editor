@@ -1,7 +1,7 @@
 {
   "name": "yfm-editor",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Native macOS editor for Markdown / YFM files, built on @gravity-ui/markdown-editor and Tauri 2.",
   "license": "MIT",
   "author": "Alexey Melekhin",

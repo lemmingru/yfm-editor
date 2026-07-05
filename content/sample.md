@@ -68,6 +68,14 @@ $$
 \int_{-\infty}^{\infty} e^{-x^2}\,dx = \sqrt{\pi}
 $$
 
+## Mermaid
+
+```mermaid
+flowchart LR
+    Edit[Edit Markdown] --> Preview[Preview YFM]
+    Preview --> Render[Render Mermaid]
+```
+
 ## Regular content
 
 Plain **bold**, _italic_, and a [link](https://diplodoc.com).
