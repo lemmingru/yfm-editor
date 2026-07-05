@@ -15,8 +15,9 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "app": "tauri dev",
-    "app:build": "tauri build"
+    "tauri:doctor": "node scripts/check-tauri-env.mjs",
+    "app": "node scripts/run-tauri.mjs dev",
+    "app:build": "node scripts/run-tauri.mjs build"
   },
   "dependencies": {
     "@diplodoc/cut-extension": "^1.1.1",

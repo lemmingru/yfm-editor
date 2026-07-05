@@ -28,9 +28,21 @@ cd yfm-editor
 npm install
 ```
 
-`npm install` also fetches the Rust crates on the first build; make sure the
-Rust toolchain and Xcode Command Line Tools (see [Requirements](#requirements))
-are present before running the Tauri commands below.
+The first Tauri run/build downloads the Rust crates. If `npm run app` says
+`Cargo was not found`, install Rust with `rustup`, restart the terminal, and
+try again:
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+. "$HOME/.cargo/env"
+cargo --version
+```
+
+On macOS, install Xcode Command Line Tools too:
+
+```bash
+xcode-select --install
+```
 
 ## Develop
 
