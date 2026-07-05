@@ -23,7 +23,7 @@ the Rust core, so there is no HTTP server and no exposed filesystem API.
 ## Install
 
 ```bash
-git clone https://github.com/alxmelekhin/yfm-editor.git
+git clone https://github.com/lemmingru/yfm-editor
 cd yfm-editor
 npm install
 ```
