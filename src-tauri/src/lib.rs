@@ -46,9 +46,6 @@ struct MenuLabels {
     clear_menu: String,
     save: String,
     save_as: String,
-    export: String,
-    export_html: String,
-    export_pdf: String,
     edit: String,
     undo: String,
     redo: String,
@@ -77,9 +74,6 @@ impl Default for MenuLabels {
             clear_menu: "Clear Menu".into(),
             save: "Save".into(),
             save_as: "Save As…".into(),
-            export: "Export".into(),
-            export_html: "HTML…".into(),
-            export_pdf: "PDF…".into(),
             edit: "Edit".into(),
             undo: "Undo".into(),
             redo: "Redo".into(),
@@ -361,12 +355,6 @@ fn build_app_menu(
     let save_as = MenuItemBuilder::with_id("save-as", &labels.save_as)
         .accelerator("CmdOrCtrl+Shift+S")
         .build(app)?;
-    let export_html = MenuItemBuilder::with_id("export-html", &labels.export_html).build(app)?;
-    let export_pdf = MenuItemBuilder::with_id("export-pdf", &labels.export_pdf).build(app)?;
-    let export = SubmenuBuilder::new(app, &labels.export)
-        .item(&export_html)
-        .item(&export_pdf)
-        .build()?;
     let file_menu = SubmenuBuilder::new(app, &labels.file)
         .item(&new)
         .item(&open)
@@ -374,8 +362,6 @@ fn build_app_menu(
         .separator()
         .item(&save)
         .item(&save_as)
-        .separator()
-        .item(&export)
         .separator()
         .close_window()
         .build()?;

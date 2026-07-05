@@ -11,14 +11,12 @@ import {
   Text,
   ThemeProvider,
   Toaster,
-  ToasterComponent,
   ToasterProvider,
-  useToaster,
 } from '@gravity-ui/uikit';
 import {emit, listen} from '@tauri-apps/api/event';
 import {getCurrentWindow} from '@tauri-apps/api/window';
 import {homeDir} from '@tauri-apps/api/path';
-import {ask} from '@tauri-apps/plugin-dialog';
+import {ask, message} from '@tauri-apps/plugin-dialog';
 import {EditorPane} from './components/EditorPane';
 import {
   fetchFile,
@@ -128,7 +126,6 @@ export function App() {
             resolvedLang={resolvedLang}
             onUpdatePrefs={updatePrefs}
           />
-          <ToasterComponent />
         </ToasterProvider>
       </I18nProvider>
     </ThemeProvider>
@@ -146,7 +143,6 @@ function Workspace({
   resolvedLang: ReturnType<typeof resolveLang>;
   onUpdatePrefs: (patch: Partial<Preferences>) => void;
 }) {
-  const {add} = useToaster();
   const {t} = useI18n();
   const [filePath, setFilePath] = React.useState<string | null>(null);
   const [markup, setMarkup] = React.useState<string>('');
@@ -202,11 +198,9 @@ function Workspace({
           setDocKey((k) => k + 1);
           rememberPath(path);
         })
-        .catch((e) =>
-          add({name: 'open-error', title: `${t('openFailed')}: ${e.message}`, theme: 'danger'}),
-        );
+        .catch((e) => message(e.message, {title: t('openFailed'), kind: 'error'}));
     },
-    [add, prefs.defaultMode, rememberPath, t],
+    [prefs.defaultMode, rememberPath, t],
   );
 
   const canReuseCurrentWindow = filePath === null && !dirty;
@@ -215,12 +209,12 @@ function Workspace({
     async (path: string) => {
       if (prefs.openBehavior === 'newWindow' && !canReuseCurrentWindow) {
         return openFileWindow(path).catch((e) =>
-          add({name: 'open-window-error', title: `${t('openFailed')}: ${e.message}`, theme: 'danger'}),
+          message(e.message, {title: t('openFailed'), kind: 'error'}),
         );
       }
       if (await confirmDiscard()) void loadPath(path);
     },
-    [add, canReuseCurrentWindow, confirmDiscard, loadPath, prefs.openBehavior, t],
+    [canReuseCurrentWindow, confirmDiscard, loadPath, prefs.openBehavior, t],
   );
 
   const openFromOs = React.useCallback(
@@ -238,7 +232,7 @@ function Workspace({
   const handleNew = React.useCallback(async () => {
     if (prefs.openBehavior === 'newWindow' && !canReuseCurrentWindow) {
       await openFileWindow().catch((e) =>
-        add({name: 'open-window-error', title: `${t('openFailed')}: ${e.message}`, theme: 'danger'}),
+        message(e.message, {title: t('openFailed'), kind: 'error'}),
       );
       return;
     }
@@ -248,7 +242,7 @@ function Workspace({
     setDirty(false);
     setActiveMode(prefs.defaultMode);
     setDocKey((k) => k + 1);
-  }, [add, canReuseCurrentWindow, confirmDiscard, prefs.defaultMode, prefs.openBehavior, t]);
+  }, [canReuseCurrentWindow, confirmDiscard, prefs.defaultMode, prefs.openBehavior, t]);
 
   const writeTo = React.useCallback(
     (path: string, value: string) => {
@@ -257,13 +251,10 @@ function Workspace({
           setFilePath(path);
           markSavedRef.current();
           rememberPath(path);
-          add({name: 'save-ok', title: `${t('saved')} ${basename(path)}`, theme: 'success', autoHiding: 2000});
         })
-        .catch((e) =>
-          add({name: 'save-error', title: `${t('saveFailed')}: ${e.message}`, theme: 'danger'}),
-        );
+        .catch((e) => message(e.message, {title: t('saveFailed'), kind: 'error'}));
     },
-    [add, rememberPath, t],
+    [rememberPath, t],
   );
 
   const handleSaveAs = React.useCallback(async () => {
@@ -275,12 +266,6 @@ function Workspace({
     if (filePath) await writeTo(filePath, getValueRef.current());
     else await handleSaveAs();
   }, [filePath, writeTo, handleSaveAs]);
-
-  const notImplemented = React.useCallback(
-    (what: string) =>
-      add({name: 'todo', title: `${what} — ${t('comingSoon')}`, theme: 'info', autoHiding: 2000}),
-    [add, t],
-  );
 
   const openRecent = React.useCallback(
     async (index: number) => {
@@ -308,8 +293,6 @@ function Workspace({
     open: handleOpen,
     save: handleSave,
     'save-as': handleSaveAs,
-    'export-html': () => notImplemented(t('htmlExport')),
-    'export-pdf': () => notImplemented(t('pdfExport')),
     preferences: () => setPrefsOpen(true),
     'toggle-theme': () =>
       onUpdatePrefs({theme: resolvedTheme === 'light' ? 'dark' : 'light'}),

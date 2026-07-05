@@ -93,7 +93,6 @@ handler: in Finder, right-click a `.md` file → Get Info → Open with → choo
 
 ## Roadmap
 
-- Export to HTML / PDF (menu items present as stubs).
 - Toolbar insert buttons for Mermaid and KaTeX (extensions already bundled).
 
 ## Acknowledgments

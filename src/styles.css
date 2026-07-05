@@ -15,10 +15,24 @@ body,
 .main__editor {
   /* Roomier gutters; inner editor/preview inherit this custom property. */
   --g-md-editor-padding: 24px;
+  --app-toolbar-window-inset: 16px;
+  --g-md-toolbar-sticky-padding: 0 var(--app-toolbar-window-inset);
 
   flex: 1;
   min-height: 0;
   overflow: auto;
+}
+
+.main__editor [data-layout='sticky-toolbar'] {
+  box-sizing: border-box;
+  width: 100%;
+  padding-inline: var(--app-toolbar-window-inset);
+  background: var(--g-color-base-background);
+  border-bottom: 1px solid var(--g-color-line-generic);
+}
+
+.main__editor .g-md-editor-sticky_sticky-active:not(.g-md-editor-sticky_clear)::before {
+  display: none;
 }
 
 /* The search popup (both its compact and expanded "search & replace" views) is

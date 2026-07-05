@@ -14,9 +14,6 @@ export type MenuLabels = {
   clearMenu: string;
   save: string;
   saveAs: string;
-  export: string;
-  exportHtml: string;
-  exportPdf: string;
   edit: string;
   undo: string;
   redo: string;
@@ -39,10 +36,6 @@ const messages = {
     unsavedCloseQuestion: 'You have unsaved changes. Close without saving?',
     openFailed: 'Open failed',
     saveFailed: 'Save failed',
-    saved: 'Saved',
-    comingSoon: 'coming soon',
-    htmlExport: 'HTML export',
-    pdfExport: 'PDF export',
     untitled: 'Untitled',
     unsavedLocation: 'Not saved to disk yet',
     preferences: 'Preferences',
@@ -68,10 +61,6 @@ const messages = {
     unsavedCloseQuestion: 'Есть несохранённые изменения. Закрыть без сохранения?',
     openFailed: 'Не удалось открыть',
     saveFailed: 'Не удалось сохранить',
-    saved: 'Сохранено',
-    comingSoon: 'скоро будет доступно',
-    htmlExport: 'Экспорт HTML',
-    pdfExport: 'Экспорт PDF',
     untitled: 'Без названия',
     unsavedLocation: 'Ещё не сохранён на диск',
     preferences: 'Настройки',
@@ -105,9 +94,6 @@ const menuLabels: Record<Lang, MenuLabels> = {
     clearMenu: 'Clear Menu',
     save: 'Save',
     saveAs: 'Save As…',
-    export: 'Export',
-    exportHtml: 'HTML…',
-    exportPdf: 'PDF…',
     edit: 'Edit',
     undo: 'Undo',
     redo: 'Redo',
@@ -133,9 +119,6 @@ const menuLabels: Record<Lang, MenuLabels> = {
     clearMenu: 'Очистить меню',
     save: 'Сохранить',
     saveAs: 'Сохранить как…',
-    export: 'Экспорт',
-    exportHtml: 'HTML…',
-    exportPdf: 'PDF…',
     edit: 'Правка',
     undo: 'Отменить',
     redo: 'Повторить',

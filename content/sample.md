@@ -1,6 +1,6 @@
 # YFM sample
 
-This file exercises the YFM features the editor must support. 123
+This file exercises the YFM features the editor must support.123
 
 ## Note
 
@@ -64,8 +64,7 @@ Inline math like $c = \pm\sqrt{a^2 + b^2}$ should render within the text.
 
 A display formula on its own lines:
 
-$$
-\int_{-\infty}^{\infty} e^{-x^2}\,dx = \sqrt{\pi}
+$$\int_{-\infty}^{\infty} e^{-x^2}\,dx = \sqrt{\pi}
 $$
 
 ## Mermaid
@@ -75,7 +74,6 @@ flowchart LR
     Edit[Edit Markdown] --> Preview[Preview YFM]
     Preview --> Render[Render Mermaid]
 ```
-
 ## Regular content
 
 Plain **bold**, _italic_, and a [link](https://diplodoc.com).

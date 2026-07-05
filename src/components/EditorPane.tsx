@@ -147,7 +147,7 @@ type Props = {
   onDirtyChange: (dirty: boolean) => void;
   /** Called when the editor emits a submit (Cmd+Enter). */
   onSubmit: () => void;
-  /** Exposes a getter for the current markup so the parent can save/export. */
+  /** Exposes a getter for the current markup so the parent can save. */
   registerGetValue: (fn: () => string) => void;
   /** Exposes a callback the parent calls after a save to reset the clean baseline. */
   registerMarkSaved: (fn: () => void) => void;
