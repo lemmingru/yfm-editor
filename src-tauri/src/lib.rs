@@ -51,6 +51,7 @@ struct MenuLabels {
     redo: String,
     cut: String,
     copy: String,
+    copy_agent_context: String,
     paste: String,
     select_all: String,
     window: String,
@@ -79,6 +80,7 @@ impl Default for MenuLabels {
             redo: "Redo".into(),
             cut: "Cut".into(),
             copy: "Copy".into(),
+            copy_agent_context: "Copy Agent Context".into(),
             paste: "Paste".into(),
             select_all: "Select All".into(),
             window: "Window".into(),
@@ -366,12 +368,19 @@ fn build_app_menu(
         .close_window()
         .build()?;
 
+    let copy_agent_context = MenuItemBuilder::with_id(
+        "copy-agent-context",
+        &labels.copy_agent_context,
+    )
+    .accelerator("CmdOrCtrl+Alt+C")
+    .build(app)?;
     let edit_menu = SubmenuBuilder::new(app, &labels.edit)
         .undo_with_text(&labels.undo)
         .redo_with_text(&labels.redo)
         .separator()
         .cut_with_text(&labels.cut)
         .copy_with_text(&labels.copy)
+        .item(&copy_agent_context)
         .paste_with_text(&labels.paste)
         .select_all_with_text(&labels.select_all)
         .build()?;

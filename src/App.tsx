@@ -163,6 +163,10 @@ function Workspace({
   const getValueRef = React.useRef<() => string>(() => '');
   // Resets the editor's clean baseline after a successful save (set by EditorPane).
   const markSavedRef = React.useRef<() => void>(() => {});
+  // Copies current selection/current line with file location for agent prompts.
+  const copyAgentContextRef = React.useRef<(filePath: string) => Promise<boolean>>(
+    async () => false,
+  );
   // Latest dirty flag for use inside one-shot listeners.
   const dirtyRef = React.useRef(dirty);
   dirtyRef.current = dirty;
@@ -267,6 +271,20 @@ function Workspace({
     else await handleSaveAs();
   }, [filePath, writeTo, handleSaveAs]);
 
+  const handleCopyAgentContext = React.useCallback(async () => {
+    if (!filePath) {
+      await message(t('agentContextNoFile'), {kind: 'warning'});
+      return;
+    }
+
+    try {
+      const copied = await copyAgentContextRef.current(filePath);
+      if (!copied) await message(t('agentContextNoSelection'), {kind: 'warning'});
+    } catch {
+      await message(t('agentContextCopyFailed'), {kind: 'error'});
+    }
+  }, [filePath, t]);
+
   const openRecent = React.useCallback(
     async (index: number) => {
       const path = recentFilesRef.current[index];
@@ -293,6 +311,7 @@ function Workspace({
     open: handleOpen,
     save: handleSave,
     'save-as': handleSaveAs,
+    'copy-agent-context': () => void handleCopyAgentContext(),
     preferences: () => setPrefsOpen(true),
     'toggle-theme': () =>
       onUpdatePrefs({theme: resolvedTheme === 'light' ? 'dark' : 'light'}),
@@ -375,6 +394,7 @@ function Workspace({
         onSubmit={() => void handleSave()}
         registerGetValue={(fn) => (getValueRef.current = fn)}
         registerMarkSaved={(fn) => (markSavedRef.current = fn)}
+        registerCopyAgentContext={(fn) => (copyAgentContextRef.current = fn)}
       />
       <footer className="statusbar">
         {filePath ? (

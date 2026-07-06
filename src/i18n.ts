@@ -19,6 +19,7 @@ export type MenuLabels = {
   redo: string;
   cut: string;
   copy: string;
+  copyAgentContext: string;
   paste: string;
   selectAll: string;
   window: string;
@@ -38,6 +39,9 @@ const messages = {
     saveFailed: 'Save failed',
     untitled: 'Untitled',
     unsavedLocation: 'Not saved to disk yet',
+    agentContextNoFile: 'Save the file to copy agent context.',
+    agentContextNoSelection: 'Could not determine editor context.',
+    agentContextCopyFailed: 'Could not copy agent context.',
     preferences: 'Preferences',
     theme: 'Theme',
     themeLight: 'Light',
@@ -63,6 +67,9 @@ const messages = {
     saveFailed: 'Не удалось сохранить',
     untitled: 'Без названия',
     unsavedLocation: 'Ещё не сохранён на диск',
+    agentContextNoFile: 'Сохраните файл, чтобы скопировать контекст для агента.',
+    agentContextNoSelection: 'Не удалось определить контекст в редакторе.',
+    agentContextCopyFailed: 'Не удалось скопировать контекст для агента.',
     preferences: 'Настройки',
     theme: 'Тема',
     themeLight: 'Светлая',
@@ -99,6 +106,7 @@ const menuLabels: Record<Lang, MenuLabels> = {
     redo: 'Redo',
     cut: 'Cut',
     copy: 'Copy',
+    copyAgentContext: 'Copy Agent Context',
     paste: 'Paste',
     selectAll: 'Select All',
     window: 'Window',
@@ -124,6 +132,7 @@ const menuLabels: Record<Lang, MenuLabels> = {
     redo: 'Повторить',
     cut: 'Вырезать',
     copy: 'Копировать',
+    copyAgentContext: 'Копировать контекст для агента',
     paste: 'Вставить',
     selectAll: 'Выбрать всё',
     window: 'Окно',
