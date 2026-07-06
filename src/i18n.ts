@@ -41,6 +41,8 @@ const messages = {
     unsavedLocation: 'Not saved to disk yet',
     agentContextNoFile: 'Save the file to copy agent context.',
     agentContextNoSelection: 'Could not determine editor context.',
+    agentContextUseMarkupMode:
+      'Could not determine Markdown source in visual mode. Switch to Markdown markup mode and try again.',
     agentContextCopyFailed: 'Could not copy agent context.',
     preferences: 'Preferences',
     theme: 'Theme',
@@ -69,6 +71,8 @@ const messages = {
     unsavedLocation: 'Ещё не сохранён на диск',
     agentContextNoFile: 'Сохраните файл, чтобы скопировать контекст для агента.',
     agentContextNoSelection: 'Не удалось определить контекст в редакторе.',
+    agentContextUseMarkupMode:
+      'Не удалось определить исходную Markdown-разметку в визуальном режиме. Переключитесь в режим разметки Markdown и повторите операцию.',
     agentContextCopyFailed: 'Не удалось скопировать контекст для агента.',
     preferences: 'Настройки',
     theme: 'Тема',

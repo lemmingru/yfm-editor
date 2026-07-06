@@ -152,8 +152,10 @@ type Props = {
   /** Exposes a callback the parent calls after a save to reset the clean baseline. */
   registerMarkSaved: (fn: () => void) => void;
   /** Exposes a command that copies the current editor context for an agent. */
-  registerCopyAgentContext: (fn: (filePath: string) => Promise<boolean>) => void;
+  registerCopyAgentContext: (fn: (filePath: string) => Promise<CopyAgentContextResult>) => void;
 };
+
+export type CopyAgentContextResult = 'copied' | 'no-context' | 'use-markup-mode';
 
 type AgentContext = {
   startLine: number;
@@ -450,9 +452,9 @@ export function EditorPane({
               editorInternals.wysiwygEditor,
             );
 
-      if (!context) return false;
+      if (!context) return editor.currentMode === 'wysiwyg' ? 'use-markup-mode' : 'no-context';
       await navigator.clipboard.writeText(formatAgentContext(filePath, context));
-      return true;
+      return 'copied';
     });
   }, [registerCopyAgentContext, editor]);
 

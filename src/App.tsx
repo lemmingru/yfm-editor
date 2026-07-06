@@ -18,6 +18,7 @@ import {getCurrentWindow} from '@tauri-apps/api/window';
 import {homeDir} from '@tauri-apps/api/path';
 import {ask, message} from '@tauri-apps/plugin-dialog';
 import {EditorPane} from './components/EditorPane';
+import type {CopyAgentContextResult} from './components/EditorPane';
 import {
   fetchFile,
   saveFile,
@@ -77,6 +78,16 @@ function configureUiLang(lang: ReturnType<typeof resolveLang>) {
   configuredLang = lang;
   configureGravity({lang: lang as GravityLang, fallbackLang: GravityLang.En});
   configureMarkdownEditor({lang: lang as MarkdownEditorLang});
+}
+
+function showCopyAgentContextToast(content: string, theme: 'warning' | 'danger') {
+  const name = 'copy-agent-context';
+  toaster.remove(name);
+  toaster.add({name, content, theme, autoHiding: 6000, isClosable: true});
+}
+
+async function clearClipboard() {
+  await navigator.clipboard.writeText('').catch(() => {});
 }
 
 export function App() {
@@ -164,8 +175,8 @@ function Workspace({
   // Resets the editor's clean baseline after a successful save (set by EditorPane).
   const markSavedRef = React.useRef<() => void>(() => {});
   // Copies current selection/current line with file location for agent prompts.
-  const copyAgentContextRef = React.useRef<(filePath: string) => Promise<boolean>>(
-    async () => false,
+  const copyAgentContextRef = React.useRef<(filePath: string) => Promise<CopyAgentContextResult>>(
+    async () => 'no-context',
   );
   // Latest dirty flag for use inside one-shot listeners.
   const dirtyRef = React.useRef(dirty);
@@ -273,15 +284,24 @@ function Workspace({
 
   const handleCopyAgentContext = React.useCallback(async () => {
     if (!filePath) {
-      await message(t('agentContextNoFile'), {kind: 'warning'});
+      await clearClipboard();
+      showCopyAgentContextToast(t('agentContextNoFile'), 'warning');
       return;
     }
 
     try {
-      const copied = await copyAgentContextRef.current(filePath);
-      if (!copied) await message(t('agentContextNoSelection'), {kind: 'warning'});
+      const result = await copyAgentContextRef.current(filePath);
+      if (result === 'no-context') {
+        await clearClipboard();
+        showCopyAgentContextToast(t('agentContextNoSelection'), 'warning');
+      }
+      if (result === 'use-markup-mode') {
+        await clearClipboard();
+        showCopyAgentContextToast(t('agentContextUseMarkupMode'), 'warning');
+      }
     } catch {
-      await message(t('agentContextCopyFailed'), {kind: 'error'});
+      await clearClipboard();
+      showCopyAgentContextToast(t('agentContextCopyFailed'), 'danger');
     }
   }, [filePath, t]);
 
