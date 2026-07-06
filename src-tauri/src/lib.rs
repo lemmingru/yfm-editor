@@ -1,17 +1,39 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{hash_map::DefaultHasher, HashMap, HashSet};
+use std::hash::{Hash, Hasher};
 use std::path::Path;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
+use notify_debouncer_full::notify::{RecommendedWatcher, RecursiveMode};
+use notify_debouncer_full::{new_debouncer, Debouncer, DebounceEventResult, RecommendedCache};
 use serde::{Deserialize, Serialize};
 use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder, WINDOW_SUBMENU_ID};
 use tauri::{Emitter, Manager, State, WebviewUrl, WebviewWindowBuilder};
+
+/// Debounced filesystem watcher handle kept alive for the lifetime of a watched
+/// document. Dropping it signals the internal thread to stop.
+type WatcherHandle = Debouncer<RecommendedWatcher, RecommendedCache>;
+
+/// Per-window watch state: the path being watched and a content hash baseline
+/// shared with the watcher callback. The baseline lets us ignore our own writes
+/// (we refresh it in `write_file`) and detect genuine external changes.
+struct WatchState {
+    path: String,
+    baseline: Arc<Mutex<u64>>,
+    _debouncer: WatcherHandle,
+}
+
+fn content_hash(content: &str) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    content.hash(&mut hasher);
+    hasher.finish()
+}
 
 /// Tracks files requested via the OS (Finder "open with", `open file.md`) so the
 /// frontend can pick them up. On a cold start the request arrives before the
 /// webview has any listeners, so we buffer it and hand it over once the frontend
 /// reports ready via `frontend_ready`. Warm opens are emitted directly.
-#[derive(Default)]
 struct AppState {
     ready: Mutex<HashSet<String>>,
     pending: Mutex<HashMap<String, Vec<String>>>,
@@ -20,6 +42,22 @@ struct AppState {
     window_counter: AtomicUsize,
     quitting: Mutex<bool>,
     focused_label: Mutex<Option<String>>,
+    watchers: Mutex<HashMap<String, WatchState>>,
+}
+
+impl Default for AppState {
+    fn default() -> Self {
+        Self {
+            ready: Mutex::default(),
+            pending: Mutex::default(),
+            recent_files: Mutex::default(),
+            menu_labels: Mutex::default(),
+            window_counter: AtomicUsize::new(0),
+            quitting: Mutex::default(),
+            focused_label: Mutex::default(),
+            watchers: Mutex::default(),
+        }
+    }
 }
 
 #[derive(Serialize)]
@@ -46,6 +84,7 @@ struct MenuLabels {
     clear_menu: String,
     save: String,
     save_as: String,
+    revert: String,
     edit: String,
     undo: String,
     redo: String,
@@ -75,6 +114,7 @@ impl Default for MenuLabels {
             clear_menu: "Clear Menu".into(),
             save: "Save".into(),
             save_as: "Save As…".into(),
+            revert: "Revert to Saved".into(),
             edit: "Edit".into(),
             undo: "Undo".into(),
             redo: "Redo".into(),
@@ -100,11 +140,92 @@ fn read_file(path: String) -> Result<FileData, String> {
 }
 
 #[tauri::command]
-fn write_file(path: String, content: String) -> Result<(), String> {
+fn write_file(
+    window: tauri::WebviewWindow,
+    state: State<AppState>,
+    path: String,
+    content: String,
+) -> Result<(), String> {
+    // Hash before the move so we can refresh the watcher baseline after writing.
+    let new_hash = content_hash(&content);
     if let Some(parent) = Path::new(&path).parent() {
         std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }
-    std::fs::write(&path, content).map_err(|e| e.to_string())
+    std::fs::write(&path, content).map_err(|e| e.to_string())?;
+
+    // Suppress the watcher's own change event: refresh the baseline so the
+    // debounced callback sees no difference and stays quiet. The debounce
+    // delay guarantees this runs before the callback re-reads the file.
+    let label = window.label().to_string();
+    if let Some(watch) = state.watchers.lock().unwrap().get(&label) {
+        if watch.path == path {
+            *watch.baseline.lock().unwrap() = new_hash;
+        }
+    }
+    Ok(())
+}
+
+/// Watch a file for external changes and emit `file-changed-on-disk` to the
+/// calling window when its content diverges from the baseline. Watches the
+/// parent directory (non-recursive) so atomic saves via temp + rename don't
+/// break tracking. Replaces any previous watch for this window.
+#[tauri::command]
+fn watch_file(
+    app: tauri::AppHandle,
+    window: tauri::WebviewWindow,
+    state: State<AppState>,
+    path: String,
+) -> Result<(), String> {
+    let label = window.label().to_string();
+
+    let baseline = match std::fs::read_to_string(&path) {
+        Ok(content) => Arc::new(Mutex::new(content_hash(&content))),
+        Err(e) => return Err(e.to_string()),
+    };
+
+    let baseline_cb = baseline.clone();
+    let path_cb = path.clone();
+    let label_cb = label.clone();
+    let app_cb = app.clone();
+    let target = Path::new(&path_cb).to_path_buf();
+
+    let mut debouncer = new_debouncer(Duration::from_millis(300), None, move |res: DebounceEventResult| {
+        let events = match res {
+            Ok(events) => events,
+            Err(_) => return,
+        };
+        // Only react to events touching our file (we watch the whole parent dir).
+        if !events.iter().any(|ev| ev.event.paths.iter().any(|p| p == &target)) {
+            return;
+        }
+        let Ok(new_content) = std::fs::read_to_string(&path_cb) else { return; };
+        let new_hash = content_hash(&new_content);
+        let mut current = baseline_cb.lock().unwrap();
+        if *current == new_hash {
+            return;
+        }
+        *current = new_hash;
+        let _ = app_cb.emit_to(label_cb.clone(), "file-changed-on-disk", path_cb.clone());
+    })
+    .map_err(|e| e.to_string())?;
+
+    let parent = Path::new(&path).parent().unwrap_or(Path::new(&path));
+    debouncer.watch(parent, RecursiveMode::NonRecursive).map_err(|e| e.to_string())?;
+
+    // Dropping the previous entry stops its watcher (Debouncer::drop signals stop).
+    state
+        .watchers
+        .lock()
+        .unwrap()
+        .insert(label, WatchState { path, baseline, _debouncer: debouncer });
+    Ok(())
+}
+
+/// Stop watching the file associated with the calling window (new unsaved doc,
+/// Save As to a different file, window close).
+#[tauri::command]
+fn unwatch_file(window: tauri::WebviewWindow, state: State<AppState>) {
+    state.watchers.lock().unwrap().remove(window.label());
 }
 
 #[tauri::command]
@@ -357,6 +478,7 @@ fn build_app_menu(
     let save_as = MenuItemBuilder::with_id("save-as", &labels.save_as)
         .accelerator("CmdOrCtrl+Shift+S")
         .build(app)?;
+    let revert = MenuItemBuilder::with_id("revert", &labels.revert).build(app)?;
     let file_menu = SubmenuBuilder::new(app, &labels.file)
         .item(&new)
         .item(&open)
@@ -364,6 +486,7 @@ fn build_app_menu(
         .separator()
         .item(&save)
         .item(&save_as)
+        .item(&revert)
         .separator()
         .close_window()
         .build()?;
@@ -472,7 +595,9 @@ pub fn run() {
             set_represented_file,
             request_quit,
             cancel_quit,
-            open_file_window
+            open_file_window,
+            watch_file,
+            unwatch_file
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
@@ -502,6 +627,8 @@ pub fn run() {
                             focused_label.take();
                         }
                         drop(focused_label);
+                        // Release the file watcher tied to this window.
+                        state.watchers.lock().unwrap().remove(label.as_str());
                         if *state.quitting.lock().unwrap() && app.webview_windows().is_empty() {
                             app.exit(0);
                         }

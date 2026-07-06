@@ -14,6 +14,7 @@ export type MenuLabels = {
   clearMenu: string;
   save: string;
   saveAs: string;
+  revert: string;
   edit: string;
   undo: string;
   redo: string;
@@ -39,6 +40,13 @@ const messages = {
     saveFailed: 'Save failed',
     untitled: 'Untitled',
     unsavedLocation: 'Not saved to disk yet',
+    fileReloadedToast: 'File updated from disk.',
+    fileChangedBanner: 'The file changed on disk. You have unsaved changes.',
+    reload: 'Discard and Reload',
+    keepMine: 'Keep Editing My Version',
+    overwriteChangedTitle: 'File changed on disk',
+    overwriteChangedQuestion:
+      'The file has changed on disk since you opened it. Overwrite the disk version with your changes?',
     agentContextNoFile: 'Save the file to copy agent context.',
     agentContextNoSelection: 'Could not determine editor context.',
     agentContextUseMarkupMode:
@@ -69,6 +77,13 @@ const messages = {
     saveFailed: 'Не удалось сохранить',
     untitled: 'Без названия',
     unsavedLocation: 'Ещё не сохранён на диск',
+    fileReloadedToast: 'Файл обновлён с диска.',
+    fileChangedBanner: 'Файл изменён на диске. У вас есть несохранённые правки.',
+    reload: 'Отбросить и загрузить',
+    keepMine: 'Редактировать мою версию',
+    overwriteChangedTitle: 'Файл изменён на диске',
+    overwriteChangedQuestion:
+      'Файл на диске изменился с момента открытия. Перезаписать его вашими изменениями?',
     agentContextNoFile: 'Сохраните файл, чтобы скопировать контекст для агента.',
     agentContextNoSelection: 'Не удалось определить контекст в редакторе.',
     agentContextUseMarkupMode:
@@ -105,6 +120,7 @@ const menuLabels: Record<Lang, MenuLabels> = {
     clearMenu: 'Clear Menu',
     save: 'Save',
     saveAs: 'Save As…',
+    revert: 'Revert to Saved',
     edit: 'Edit',
     undo: 'Undo',
     redo: 'Redo',
@@ -131,6 +147,7 @@ const menuLabels: Record<Lang, MenuLabels> = {
     clearMenu: 'Очистить меню',
     save: 'Сохранить',
     saveAs: 'Сохранить как…',
+    revert: 'Вернуть к сохранённому',
     edit: 'Правка',
     undo: 'Отменить',
     redo: 'Повторить',

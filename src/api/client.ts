@@ -15,6 +15,16 @@ export function saveFile(path: string, content: string): Promise<void> {
   return invoke<void>('write_file', {path, content});
 }
 
+/** Start watching a file for external changes (Rust `watch_file` command). */
+export function watchFile(path: string): Promise<void> {
+  return invoke<void>('watch_file', {path});
+}
+
+/** Stop watching the file associated with this window (Rust `unwatch_file` command). */
+export function unwatchFile(): Promise<void> {
+  return invoke<void>('unwatch_file');
+}
+
 /** Mark the native window as having unsaved document changes on macOS. */
 export function setDocumentEdited(edited: boolean): Promise<void> {
   return invoke<void>('set_document_edited', {edited});

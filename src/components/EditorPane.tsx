@@ -1,4 +1,5 @@
 import React from 'react';
+import {createPortal} from 'react-dom';
 import {MarkdownEditorView, useMarkdownEditor} from '@gravity-ui/markdown-editor';
 import type {EscapeConfig, RenderPreview, ToolbarsPreset, ToolbarOrders} from '@gravity-ui/markdown-editor';
 import {LatexExtension} from '@gravity-ui/markdown-editor-latex-extension';
@@ -153,6 +154,14 @@ type Props = {
   registerMarkSaved: (fn: () => void) => void;
   /** Exposes a command that copies the current editor context for an agent. */
   registerCopyAgentContext: (fn: (filePath: string) => Promise<CopyAgentContextResult>) => void;
+  /**
+   * Exposes a command that replaces the editor contents in place (used when the
+   * file is reloaded from disk). Unlike a remount, this preserves the user's
+   * scroll position and reading context.
+   */
+  registerReplaceContent: (fn: (markup: string) => void) => void;
+  /** Warning shown under the editor toolbar when the disk version diverged. */
+  reloadBanner?: React.ReactNode;
 };
 
 export type CopyAgentContextResult = 'copied' | 'no-context' | 'use-markup-mode';
@@ -372,6 +381,8 @@ export function EditorPane({
   registerGetValue,
   registerMarkSaved,
   registerCopyAgentContext,
+  registerReplaceContent,
+  reloadBanner,
 }: Props) {
   const renderPreview = React.useCallback<RenderPreview>(
     ({getValue}) => <Preview markup={getValue()} />,
@@ -396,6 +407,9 @@ export function EditorPane({
       },
     },
   });
+  const editorRootRef = React.useRef<HTMLDivElement>(null);
+  const [reloadBannerHost, setReloadBannerHost] = React.useState<HTMLDivElement | null>(null);
+  const [reloadBannerPlacementRev, setReloadBannerPlacementRev] = React.useState(0);
 
   // Keep the latest parent callbacks in refs so the change subscription below
   // depends only on `editor` and never re-subscribes / re-captures the baseline
@@ -410,11 +424,17 @@ export function EditorPane({
   // once per editor instance. Comparing against it means undoing back to the
   // saved state (or emptying a new doc) reliably clears the dirty flag.
   const baselineRef = React.useRef<string | null>(null);
+  // True while an in-place content replacement (reload from disk) is running.
+  // Suppresses the transient dirty signal from the editor's `change` event so
+  // the baseline can be re-anchored to the new content without flicker.
+  const replacingRef = React.useRef(false);
 
   React.useEffect(() => {
     baselineRef.current = normalizeMarkup(editor.getValue());
-    const emitDirty = () =>
+    const emitDirty = () => {
+      if (replacingRef.current) return;
       onDirtyChangeRef.current(normalizeMarkup(editor.getValue()) !== baselineRef.current);
+    };
     const handleSubmit = () => onSubmitRef.current();
     editor.on('change', emitDirty);
     editor.on('submit', handleSubmit);
@@ -434,6 +454,20 @@ export function EditorPane({
       onDirtyChangeRef.current(false);
     });
   }, [registerMarkSaved, editor]);
+
+  // Replace the editor contents in place (reload from disk) without remounting,
+  // so the user's scroll position and reading context are preserved. The editor
+  // emits a `change` event during the swap; `replacingRef` keeps it from
+  // flipping the dirty flag before the baseline is re-anchored to the new text.
+  React.useEffect(() => {
+    registerReplaceContent((newMarkup: string) => {
+      replacingRef.current = true;
+      editor.replace(newMarkup);
+      baselineRef.current = normalizeMarkup(editor.getValue());
+      replacingRef.current = false;
+      onDirtyChangeRef.current(false);
+    });
+  }, [registerReplaceContent, editor]);
 
   React.useEffect(() => {
     registerCopyAgentContext(async (filePath) => {
@@ -458,13 +492,61 @@ export function EditorPane({
     });
   }, [registerCopyAgentContext, editor]);
 
+  // The reload warning belongs to the document, not to the window chrome. Place
+  // it inside the active editor view, immediately after the toolbar, so the
+  // toolbar stays anchored while only the editable area shifts down.
+  React.useLayoutEffect(() => {
+    if (!reloadBanner) {
+      setReloadBannerHost(null);
+      return;
+    }
+
+    const root = editorRootRef.current;
+    const editorView = root?.querySelector<HTMLElement>(
+      '.g-md-wysiwyg-editor, .g-md-markup-editor',
+    );
+    const toolbar = editorView?.querySelector<HTMLElement>(
+      ':scope > .g-md-wysiwyg-editor__toolbar, :scope > .g-md-markup-editor__toolbar',
+    );
+    if (!editorView || !toolbar) {
+      setReloadBannerHost(null);
+      return;
+    }
+
+    const host = document.createElement('div');
+    host.className = 'reload-banner-slot';
+    editorView.insertBefore(host, toolbar.nextSibling);
+    setReloadBannerHost(host);
+
+    return () => {
+      host.remove();
+      setReloadBannerHost((current) => (current === host ? null : current));
+    };
+  }, [reloadBanner, reloadBannerPlacementRev]);
+
+  React.useEffect(() => {
+    const updatePlacement = () => setReloadBannerPlacementRev((rev) => rev + 1);
+    editor.on('change-editor-mode', updatePlacement);
+    editor.on('change-toolbar-visibility', updatePlacement);
+    editor.on('change-split-mode-enabled', updatePlacement);
+    return () => {
+      editor.off('change-editor-mode', updatePlacement);
+      editor.off('change-toolbar-visibility', updatePlacement);
+      editor.off('change-split-mode-enabled', updatePlacement);
+    };
+  }, [editor]);
+
   return (
-    <MarkdownEditorView
-      className="main__editor"
-      editor={editor}
-      toolbarsPreset={toolbarsPreset}
-      stickyToolbar
-      autofocus
-    />
+    <>
+      <MarkdownEditorView
+        ref={editorRootRef}
+        className="main__editor"
+        editor={editor}
+        toolbarsPreset={toolbarsPreset}
+        stickyToolbar
+        autofocus
+      />
+      {reloadBanner && reloadBannerHost ? createPortal(reloadBanner, reloadBannerHost) : null}
+    </>
   );
 }

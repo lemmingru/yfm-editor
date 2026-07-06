@@ -6,6 +6,7 @@ import {
 import {
   configure as configureGravity,
   Lang as GravityLang,
+  Button,
   Modal,
   SegmentedRadioGroup,
   Text,
@@ -32,6 +33,8 @@ import {
   cancelQuit,
   openFileWindow,
   setRepresentedFile,
+  watchFile,
+  unwatchFile,
 } from './api/client';
 import {
   loadPreferences,
@@ -84,6 +87,12 @@ function showCopyAgentContextToast(content: string, theme: 'warning' | 'danger')
   const name = 'copy-agent-context';
   toaster.remove(name);
   toaster.add({name, content, theme, autoHiding: 6000, isClosable: true});
+}
+
+function showFileReloadedToast(content: string) {
+  const name = 'file-reloaded';
+  toaster.remove(name);
+  toaster.add({name, content, theme: 'info', autoHiding: 4000, isClosable: true});
 }
 
 async function clearClipboard() {
@@ -163,6 +172,11 @@ function Workspace({
   const [prefsOpen, setPrefsOpen] = React.useState(false);
   const [recentFiles, setRecentFiles] = React.useState<string[]>(loadRecentFiles);
   const [home, setHome] = React.useState('');
+  // The file on disk changed since we last read/wrote it, and the user hasn't
+  // decided yet. Drives the reload banner and the save-overwrite confirmation.
+  const [externalChangePending, setExternalChangePending] = React.useState(false);
+  // The user chose "Keep Mine" on the banner; hide it until the next change.
+  const [bannerDismissed, setBannerDismissed] = React.useState(false);
 
   React.useEffect(() => {
     homeDir()
@@ -174,6 +188,8 @@ function Workspace({
   const getValueRef = React.useRef<() => string>(() => '');
   // Resets the editor's clean baseline after a successful save (set by EditorPane).
   const markSavedRef = React.useRef<() => void>(() => {});
+  // Replaces the editor contents in place, preserving scroll (set by EditorPane).
+  const replaceContentRef = React.useRef<(markup: string) => void>(() => {});
   // Copies current selection/current line with file location for agent prompts.
   const copyAgentContextRef = React.useRef<(filePath: string) => Promise<CopyAgentContextResult>>(
     async () => 'no-context',
@@ -217,6 +233,28 @@ function Workspace({
     },
     [prefs.defaultMode, rememberPath, t],
   );
+
+  // Re-read the open file from disk, replacing the editor contents in place
+  // (no remount) so the user's scroll position and reading context are kept.
+  // Preserves the current editing mode and clears the external-change banner.
+  const reloadFromDisk = React.useCallback(
+    (): Promise<void> => {
+      if (!filePath) return Promise.resolve();
+      return fetchFile(filePath)
+        .then((res) => {
+          replaceContentRef.current(res.content);
+          setMarkup(res.content);
+          setExternalChangePending(false);
+          setBannerDismissed(false);
+        })
+        .catch((e) => {
+          message(e.message, {title: t('openFailed'), kind: 'error'});
+        });
+    },
+    [filePath, t],
+  );
+  const reloadFromDiskRef = React.useRef(reloadFromDisk);
+  reloadFromDiskRef.current = reloadFromDisk;
 
   const canReuseCurrentWindow = filePath === null && !dirty;
 
@@ -266,6 +304,10 @@ function Workspace({
           setFilePath(path);
           markSavedRef.current();
           rememberPath(path);
+          // Our version is now on disk (and the watcher baseline is refreshed
+          // in Rust), so any previously pending external change is resolved.
+          setExternalChangePending(false);
+          setBannerDismissed(false);
         })
         .catch((e) => message(e.message, {title: t('saveFailed'), kind: 'error'}));
     },
@@ -278,9 +320,16 @@ function Workspace({
   }, [filePath, writeTo, t]);
 
   const handleSave = React.useCallback(async () => {
+    if (filePath && externalChangePending) {
+      const overwrite = await ask(t('overwriteChangedQuestion'), {
+        title: t('overwriteChangedTitle'),
+        kind: 'warning',
+      });
+      if (!overwrite) return;
+    }
     if (filePath) await writeTo(filePath, getValueRef.current());
     else await handleSaveAs();
-  }, [filePath, writeTo, handleSaveAs]);
+  }, [filePath, externalChangePending, writeTo, handleSaveAs, t]);
 
   const handleCopyAgentContext = React.useCallback(async () => {
     if (!filePath) {
@@ -323,6 +372,12 @@ function Workspace({
     await requestQuit();
   }, []);
 
+  const handleRevert = React.useCallback(async () => {
+    if (!filePath) return;
+    if (dirty && !(await confirmDiscard())) return;
+    void reloadFromDisk();
+  }, [filePath, dirty, confirmDiscard, reloadFromDisk]);
+
   // Dispatch table kept current every render so the one-shot listeners below
   // always invoke fresh closures without re-subscribing.
   const actionsRef = React.useRef<Record<string, () => void>>({});
@@ -331,6 +386,7 @@ function Workspace({
     open: handleOpen,
     save: handleSave,
     'save-as': handleSaveAs,
+    revert: handleRevert,
     'copy-agent-context': () => void handleCopyAgentContext(),
     preferences: () => setPrefsOpen(true),
     'toggle-theme': () =>
@@ -344,19 +400,41 @@ function Workspace({
   const openFromOsRef = React.useRef(openFromOs);
   openFromOsRef.current = openFromOs;
 
-  // Wire native menu events and OS file-open events (subscribe once).
-  // Scope to the current window: the backend targets these at the focused
-  // window via `emit_to`, but a global `listen` registers with target `Any`,
-  // which Tauri delivers to every window regardless of the emit target.
+  // Wire native menu events, OS file-open events, and external file-change
+  // notifications (subscribe once). Scope to the current window: the backend
+  // targets these at the focused window via `emit_to`, but a global `listen`
+  // registers with target `Any`, which Tauri delivers to every window.
   React.useEffect(() => {
     const win = getCurrentWindow();
     const unMenu = win.listen<string>('menu-action', (e) => actionsRef.current[e.payload]?.());
     const unOpen = win.listen<string>('open-file', (e) => openFromOsRef.current(e.payload));
+    const unChanged = win.listen<string>('file-changed-on-disk', () => {
+      // No local edits to lose: silently reload. Otherwise surface the banner.
+      if (!dirtyRef.current) {
+        void reloadFromDiskRef.current().then(() =>
+          showFileReloadedToast(tRef.current('fileReloadedToast')),
+        );
+      } else {
+        setExternalChangePending(true);
+        setBannerDismissed(false);
+      }
+    });
     return () => {
       unMenu.then((f) => f());
       unOpen.then((f) => f());
+      unChanged.then((f) => f());
     };
   }, []);
+
+  // Keep the Rust file watcher in sync with the open document: watch the
+  // current file, or stop watching when there is none (unsaved / new doc).
+  React.useEffect(() => {
+    if (!filePath) {
+      unwatchFile().catch(() => {});
+      return;
+    }
+    watchFile(filePath).catch(() => {});
+  }, [filePath]);
 
   React.useEffect(() => {
     updateRecentFilesMenu(buildRecentFileMenuItems(recentFiles)).catch(() => {});
@@ -414,7 +492,23 @@ function Workspace({
         onSubmit={() => void handleSave()}
         registerGetValue={(fn) => (getValueRef.current = fn)}
         registerMarkSaved={(fn) => (markSavedRef.current = fn)}
+        registerReplaceContent={(fn) => (replaceContentRef.current = fn)}
         registerCopyAgentContext={(fn) => (copyAgentContextRef.current = fn)}
+        reloadBanner={
+          externalChangePending && !bannerDismissed ? (
+            <div className="reload-banner" role="status">
+              <span className="reload-banner__text">{t('fileChangedBanner')}</span>
+              <div className="reload-banner__actions">
+                <Button size="s" view="outlined-danger" onClick={() => void reloadFromDisk()}>
+                  {t('reload')}
+                </Button>
+                <Button size="s" view="normal" onClick={() => setBannerDismissed(true)}>
+                  {t('keepMine')}
+                </Button>
+              </div>
+            </div>
+          ) : null
+        }
       />
       <footer className="statusbar">
         {filePath ? (

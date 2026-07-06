@@ -25,6 +25,7 @@ tauri = { version = "2.11.3", features = [] }
 tauri-plugin-log = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-window-state = "2.4.1"
+notify-debouncer-full = { version = "0.6.0", features = ["crossbeam-channel"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2-app-kit = { version = "0.3.2", default-features = false, features = ["NSWindow"] }
