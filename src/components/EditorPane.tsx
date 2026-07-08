@@ -164,7 +164,10 @@ type Props = {
   reloadBanner?: React.ReactNode;
 };
 
-export type CopyAgentContextResult = 'copied' | 'no-context' | 'use-markup-mode';
+export type CopyAgentContextResult =
+  | {status: 'copied'; location: string}
+  | {status: 'no-context'}
+  | {status: 'use-markup-mode'};
 
 type AgentContext = {
   startLine: number;
@@ -248,6 +251,7 @@ function findContextByNonEmptyLines(markup: string, text: string): AgentContext 
 
   const lines = markup.replace(/\r\n/g, '\n').split('\n');
   for (let start = 0; start < lines.length; start++) {
+    if (!lines[start].trim()) continue;
     let matched = 0;
     let end = start;
 
@@ -270,16 +274,30 @@ function findContextByNonEmptyLines(markup: string, text: string): AgentContext 
   return null;
 }
 
+function stripInlineMarkdown(text: string): string {
+  return text
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(/~~([^~]+)~~/g, '$1')
+    .replace(/(^|[^*])\*([^*]+)\*(?!\*)/g, '$1$2')
+    .replace(/(^|[^_])_([^_]+)_(?!_)/g, '$1$2')
+    // Drop backslash escapes so WYSIWYG-serialized lines (which may escape
+    // characters differently than the source) still match, e.g. `\[ЛС]`.
+    .replace(/\\([\\`*_{}[\]()#+\-.!~|>^$])/g, '$1');
+}
+
 function normalizeMarkdownLineForMatch(line: string): string {
-  return line
-    .trim()
-    .replace(/^>\s*/, '')
-    .replace(/^#{1,6}\s+/, '')
-    .replace(/^[-+*]\s+\[[ xX]\]\s+/, '')
-    .replace(/^[-+*]\s+/, '')
-    .replace(/^\d+[.)]\s+/, '')
-    .replace(/^\*\*(.*?)\*\*$/, '$1')
-    .replace(/^__(.*?)__$/, '$1')
+  return stripInlineMarkdown(
+    line
+      .trim()
+      .replace(/^>\s*/, '')
+      .replace(/^#{1,6}\s+/, '')
+      .replace(/^[-+*]\s+\[[ xX]\]\s+/, '')
+      .replace(/^[-+*]\s+/, '')
+      .replace(/^\d+[.)]\s+/, ''),
+  )
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -290,12 +308,15 @@ function findContextByMarkdownTextLines(markup: string, text: string): AgentCont
     .split('\n')
     .map(normalizeMarkdownLineForMatch)
     .filter(Boolean);
-  if (needle.length < 2) return null;
+  if (needle.length < 1) return null;
 
   const lines = markup.replace(/\r\n/g, '\n').split('\n');
   const normalizedLines = lines.map(normalizeMarkdownLineForMatch);
 
   for (let start = 0; start < normalizedLines.length; start++) {
+    // Don't anchor the match on a blank line, otherwise the reported range and
+    // copied text would include a leading empty line.
+    if (!normalizedLines[start]) continue;
     let matched = 0;
     let end = start;
 
@@ -364,13 +385,15 @@ function markdownFenceFor(text: string): string {
   return '`'.repeat(Math.max(3, longest + 1));
 }
 
+function formatLocation(filePath: string, context: AgentContext): string {
+  return context.startLine === context.endLine
+    ? `${filePath}:${context.startLine}`
+    : `${filePath}:${context.startLine}-${context.endLine}`;
+}
+
 function formatAgentContext(filePath: string, context: AgentContext): string {
-  const location =
-    context.startLine === context.endLine
-      ? `${filePath}:${context.startLine}`
-      : `${filePath}:${context.startLine}-${context.endLine}`;
   const fence = markdownFenceFor(context.text);
-  return `${location}\n\n${fence}markdown\n${context.text}\n${fence}`;
+  return `${formatLocation(filePath, context)}\n\n${fence}markdown\n${context.text}\n${fence}`;
 }
 
 export function EditorPane({
@@ -486,9 +509,11 @@ export function EditorPane({
               editorInternals.wysiwygEditor,
             );
 
-      if (!context) return editor.currentMode === 'wysiwyg' ? 'use-markup-mode' : 'no-context';
+      if (!context) {
+        return {status: editor.currentMode === 'wysiwyg' ? 'use-markup-mode' : 'no-context'};
+      }
       await navigator.clipboard.writeText(formatAgentContext(filePath, context));
-      return 'copied';
+      return {status: 'copied', location: formatLocation(filePath, context)};
     });
   }, [registerCopyAgentContext, editor]);
 

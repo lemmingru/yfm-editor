@@ -12,6 +12,7 @@ import {
   Text,
   ThemeProvider,
   Toaster,
+  ToasterComponent,
   ToasterProvider,
 } from '@gravity-ui/uikit';
 import {emit, listen} from '@tauri-apps/api/event';
@@ -83,10 +84,14 @@ function configureUiLang(lang: ReturnType<typeof resolveLang>) {
   configureMarkdownEditor({lang: lang as MarkdownEditorLang});
 }
 
-function showCopyAgentContextToast(content: string, theme: 'warning' | 'danger') {
+function showCopyAgentContextToast(
+  content: string,
+  theme: 'success' | 'warning' | 'danger',
+  autoHiding = 6000,
+) {
   const name = 'copy-agent-context';
   toaster.remove(name);
-  toaster.add({name, content, theme, autoHiding: 6000, isClosable: true});
+  toaster.add({name, content, theme, autoHiding, isClosable: true});
 }
 
 function showFileReloadedToast(content: string) {
@@ -146,6 +151,7 @@ export function App() {
             resolvedLang={resolvedLang}
             onUpdatePrefs={updatePrefs}
           />
+          <ToasterComponent />
         </ToasterProvider>
       </I18nProvider>
     </ThemeProvider>
@@ -192,7 +198,7 @@ function Workspace({
   const replaceContentRef = React.useRef<(markup: string) => void>(() => {});
   // Copies current selection/current line with file location for agent prompts.
   const copyAgentContextRef = React.useRef<(filePath: string) => Promise<CopyAgentContextResult>>(
-    async () => 'no-context',
+    async () => ({status: 'no-context'}),
   );
   // Latest dirty flag for use inside one-shot listeners.
   const dirtyRef = React.useRef(dirty);
@@ -340,11 +346,14 @@ function Workspace({
 
     try {
       const result = await copyAgentContextRef.current(filePath);
-      if (result === 'no-context') {
+      if (result.status === 'copied') {
+        showCopyAgentContextToast(`${t('agentContextCopied')}: ${result.location}`, 'success', 2500);
+      }
+      if (result.status === 'no-context') {
         await clearClipboard();
         showCopyAgentContextToast(t('agentContextNoSelection'), 'warning');
       }
-      if (result === 'use-markup-mode') {
+      if (result.status === 'use-markup-mode') {
         await clearClipboard();
         showCopyAgentContextToast(t('agentContextUseMarkupMode'), 'warning');
       }

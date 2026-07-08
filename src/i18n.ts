@@ -52,6 +52,7 @@ const messages = {
     agentContextUseMarkupMode:
       'Could not determine Markdown source in visual mode. Switch to Markdown markup mode and try again.',
     agentContextCopyFailed: 'Could not copy agent context.',
+    agentContextCopied: 'Copied agent context',
     preferences: 'Preferences',
     theme: 'Theme',
     themeLight: 'Light',
@@ -89,6 +90,7 @@ const messages = {
     agentContextUseMarkupMode:
       'Не удалось определить исходную Markdown-разметку в визуальном режиме. Переключитесь в режим разметки Markdown и повторите операцию.',
     agentContextCopyFailed: 'Не удалось скопировать контекст для агента.',
+    agentContextCopied: 'Контекст для агента скопирован',
     preferences: 'Настройки',
     theme: 'Тема',
     themeLight: 'Светлая',
