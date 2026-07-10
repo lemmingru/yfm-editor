@@ -28,7 +28,7 @@ import {transform as latexTransform} from '@diplodoc/latex-extension';
 import {useLatex} from '@diplodoc/latex-extension/react';
 import {transform as mermaidTransform} from '@diplodoc/mermaid-extension';
 import {useMermaid} from '@diplodoc/mermaid-extension/react';
-import type {EditingMode} from '../preferences';
+import type {EditingMode} from './types';
 
 // Keep Diplodoc's full YFM support (including multiline tables) and add rich blocks.
 // `bundle`/`validate` are disabled because we render client-side (no file output).

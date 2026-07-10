@@ -1,0 +1,36 @@
+{
+  "name": "@yfm-editor/desktop",
+  "private": true,
+  "version": "0.3.0",
+  "description": "Native macOS (and cross-platform) editor for Markdown / YFM files, built on @yfm-editor/core and Tauri 2.",
+  "license": "MIT",
+  "author": "Alexey Melekhin",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alxmelekhin/yfm-editor.git"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "tauri": "tauri",
+    "tauri:doctor": "node scripts/check-tauri-env.mjs",
+    "app": "node scripts/run-tauri.mjs dev",
+    "app:build": "node scripts/run-tauri.mjs build"
+  },
+  "dependencies": {
+    "@gravity-ui/uikit": "^7.43.0",
+    "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/plugin-dialog": "^2.7.1",
+    "@yfm-editor/core": "*",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.11.4",
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^5.4.11"
+  }
+}

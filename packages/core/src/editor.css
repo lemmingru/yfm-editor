@@ -1,49 +1,12 @@
-html,
-body,
-#root {
-  height: 100%;
-  margin: 0;
-}
+/* Editor-only styles shared across platform shells: the editor viewport, its
+ * sticky toolbar, the search popup fix, the split-mode preview, and the dark
+ * YFM/code theme. Shell chrome (window, status bar, banners, modals) lives in
+ * each platform package. */
 
-.app {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
-}
-
-/* Reload banner: shown under the editor toolbar when the open file is changed
- * on disk while the document has unsaved edits. */
+/* Host slot for a document-level banner (e.g. "file changed on disk"), rendered
+ * by the shell into a portal that EditorPane places under the toolbar. */
 .reload-banner-slot {
   flex: 0 0 auto;
-}
-
-.reload-banner {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 16px;
-  font-size: 13px;
-  line-height: 18px;
-  color: var(--g-color-text-warning);
-  background: var(--g-color-base-warning-light);
-  border-bottom: 1px solid var(--g-color-line-warning);
-}
-
-.reload-banner__text {
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.reload-banner__actions {
-  flex-shrink: 0;
-  display: flex;
-  gap: 8px;
-  white-space: nowrap;
 }
 
 .main__editor {
@@ -81,36 +44,6 @@ body,
 :has(> .g-md-search-popup) {
   z-index: 2100 !important;
   margin-block-start: 34px !important;
-}
-
-/* Status bar: shows the directory of the open file so same-named files in
- * different folders are distinguishable at a glance. */
-.statusbar {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  min-height: 22px;
-  padding: 2px 12px;
-  font-size: 12px;
-  line-height: 18px;
-  color: var(--g-color-text-secondary);
-  background: var(--g-color-base-generic);
-  border-top: 1px solid var(--g-color-line-generic);
-}
-
-.statusbar__path {
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  /* Truncate from the left so the deepest (most specific) folder stays visible. */
-  direction: rtl;
-  text-align: left;
-}
-
-.statusbar__path_muted {
-  direction: ltr;
-  opacity: 0.7;
 }
 
 /* Split-mode preview */
@@ -151,19 +84,4 @@ body.g-root_theme_dark .yfm .hljs-meta-keyword,
 body.g-root_theme_dark .yfm .hljs-doctag,
 body.g-root_theme_dark .yfm .hljs-name {
   color: #ff7b72;
-}
-
-/* Preferences modal */
-.prefs {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 24px;
-  min-width: 360px;
-}
-
-.prefs__row {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }

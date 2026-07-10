@@ -1,6 +1,8 @@
 // User preferences, persisted in localStorage (stable per-app in WKWebView).
 
-export type EditorMode = 'wysiwyg' | 'markup';
+import type {EditorMode} from '@yfm-editor/core';
+
+export type {EditorMode};
 /** @deprecated Kept as an alias; documents always open in an editable mode now. */
 export type EditingMode = EditorMode;
 export type ThemePref = 'light' | 'dark' | 'system';

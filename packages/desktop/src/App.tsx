@@ -19,8 +19,8 @@ import {emit, listen} from '@tauri-apps/api/event';
 import {getCurrentWindow} from '@tauri-apps/api/window';
 import {homeDir} from '@tauri-apps/api/path';
 import {ask, message} from '@tauri-apps/plugin-dialog';
-import {EditorPane} from './components/EditorPane';
-import type {CopyAgentContextResult} from './components/EditorPane';
+import {EditorPane} from '@yfm-editor/core';
+import type {CopyAgentContextResult} from '@yfm-editor/core';
 import {
   fetchFile,
   saveFile,

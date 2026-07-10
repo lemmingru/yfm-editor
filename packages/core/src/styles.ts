@@ -1,5 +1,6 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
+// Aggregated stylesheet + runtime CSS for the YFM editor, imported once by any
+// platform shell via `@yfm-editor/core/styles`. Keeps every consumer in sync
+// with the exact set of vendor styles the editor and preview rely on.
 
 // Gravity UI base styles + fonts.
 import '@gravity-ui/uikit/styles/fonts.css';
@@ -15,12 +16,5 @@ import '@diplodoc/latex-extension/runtime/styles';
 // Mermaid zoom controls for diagrams rendered in split preview.
 import '@diplodoc/mermaid-extension/styles/zoom.css';
 
-import './styles.css';
-
-import {App} from './App';
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-);
+// Editor layout, preview, and dark-theme code overrides shared across platforms.
+import './editor.css';
