@@ -42,6 +42,13 @@ fn content_hash(content: &str) -> u64 {
     hasher.finish()
 }
 
+fn write_contents(path: &Path, content: &str) -> Result<(), String> {
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    std::fs::write(path, content).map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 pub(crate) fn read_file(path: String) -> Result<FileData, String> {
     let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
@@ -57,10 +64,7 @@ pub(crate) fn write_file(
 ) -> Result<(), String> {
     // Hash before the move so we can refresh the watcher baseline after writing.
     let new_hash = content_hash(&content);
-    if let Some(parent) = Path::new(&path).parent() {
-        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-    }
-    std::fs::write(&path, content).map_err(|e| e.to_string())?;
+    write_contents(Path::new(&path), &content)?;
 
     // Suppress the watcher's own change event by refreshing the baseline before
     // the debounced callback re-reads the file.
@@ -140,4 +144,58 @@ pub(crate) fn watch_file(
 #[tauri::command]
 pub(crate) fn unwatch_file(window: tauri::WebviewWindow, state: State<AppState>) {
     state.files.watchers.lock().unwrap().remove(window.label());
+}
+
+#[cfg(test)]
+mod tests {
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    use super::{content_hash, read_file, write_contents};
+
+    fn temp_path(name: &str) -> std::path::PathBuf {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        std::env::temp_dir().join(format!("yfm-editor-{name}-{unique}"))
+    }
+
+    #[test]
+    fn content_hash_is_stable_and_content_sensitive() {
+        assert_eq!(content_hash("hello"), content_hash("hello"));
+        assert_ne!(content_hash("hello"), content_hash("hello!"));
+        assert_ne!(content_hash(""), content_hash(" "));
+    }
+
+    #[test]
+    fn writes_nested_directories_and_reads_unicode_content() {
+        let root = temp_path("nested");
+        let path = root.join("missing").join("document.md");
+        let content = "# Привет\n\nこんにちは";
+        write_contents(&path, content).unwrap();
+        let file = read_file(path.to_string_lossy().into_owned()).unwrap();
+        assert_eq!(file.path, path.to_string_lossy());
+        assert_eq!(file.content, content);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn reads_an_empty_file() {
+        let root = temp_path("empty");
+        let path = root.join("empty.md");
+        write_contents(&path, "").unwrap();
+        assert_eq!(
+            read_file(path.to_string_lossy().into_owned())
+                .unwrap()
+                .content,
+            ""
+        );
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn reports_a_missing_file() {
+        let path = temp_path("missing").join("absent.md");
+        assert!(read_file(path.to_string_lossy().into_owned()).is_err());
+    }
 }

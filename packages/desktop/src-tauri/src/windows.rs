@@ -15,6 +15,36 @@ pub(crate) struct WindowState {
     pub(crate) focused_label: Mutex<Option<String>>,
 }
 
+impl WindowState {
+    fn mark_ready_and_drain(&self, label: String) -> Vec<String> {
+        self.ready.lock().unwrap().insert(label.clone());
+        self.pending
+            .lock()
+            .unwrap()
+            .remove(&label)
+            .unwrap_or_default()
+    }
+
+    fn ready_target(&self) -> Option<String> {
+        let ready = self.ready.lock().unwrap();
+        self.focused_label
+            .lock()
+            .unwrap()
+            .clone()
+            .filter(|label| ready.contains(label))
+            .or_else(|| ready.contains("main").then(|| "main".to_string()))
+    }
+
+    fn buffer_open(&self, label: &str, path: String) {
+        self.pending
+            .lock()
+            .unwrap()
+            .entry(label.to_string())
+            .or_default()
+            .push(path);
+    }
+}
+
 impl Default for WindowState {
     fn default() -> Self {
         Self {
@@ -30,14 +60,7 @@ impl Default for WindowState {
 #[tauri::command]
 pub(crate) fn frontend_ready(window: tauri::WebviewWindow, state: State<AppState>) -> Vec<String> {
     let label = window.label().to_string();
-    state.windows.ready.lock().unwrap().insert(label.clone());
-    state
-        .windows
-        .pending
-        .lock()
-        .unwrap()
-        .remove(&label)
-        .unwrap_or_default()
+    state.windows.mark_ready_and_drain(label)
 }
 
 #[tauri::command]
@@ -65,36 +88,11 @@ pub(crate) fn open_file_window(
 /// Emit an OS-requested path when a frontend is ready, or buffer it otherwise.
 pub(crate) fn dispatch_open(app: &tauri::AppHandle, path: String) {
     let state = app.state::<AppState>();
-    let target = state
-        .windows
-        .focused_label
-        .lock()
-        .unwrap()
-        .clone()
-        .filter(|label| state.windows.ready.lock().unwrap().contains(label))
-        .or_else(|| {
-            state
-                .windows
-                .ready
-                .lock()
-                .unwrap()
-                .contains("main")
-                .then(|| "main".to_string())
-        });
-
-    if let Some(label) = target {
+    if let Some(label) = state.windows.ready_target() {
         let _ = app.emit_to(label, "open-file", path);
         return;
     }
-
-    state
-        .windows
-        .pending
-        .lock()
-        .unwrap()
-        .entry("main".into())
-        .or_default()
-        .push(path);
+    state.windows.buffer_open("main", path);
 }
 
 fn create_editor_window(
@@ -139,4 +137,52 @@ fn create_editor_window(
 
 pub(crate) fn focused_window_label(state: &State<AppState>) -> Option<String> {
     state.windows.focused_label.lock().unwrap().clone()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::WindowState;
+
+    #[test]
+    fn cold_start_buffers_paths_in_order_and_drains_once() {
+        let state = WindowState::default();
+        state.buffer_open("main", "/first.md".into());
+        state.buffer_open("main", "/second.md".into());
+        assert_eq!(
+            state.mark_ready_and_drain("main".into()),
+            ["/first.md", "/second.md"]
+        );
+        assert!(state.mark_ready_and_drain("main".into()).is_empty());
+    }
+
+    #[test]
+    fn targets_the_focused_window_when_it_is_ready() {
+        let state = WindowState::default();
+        state.mark_ready_and_drain("main".into());
+        state.mark_ready_and_drain("editor-1".into());
+        state
+            .focused_label
+            .lock()
+            .unwrap()
+            .replace("editor-1".into());
+        assert_eq!(state.ready_target().as_deref(), Some("editor-1"));
+    }
+
+    #[test]
+    fn falls_back_to_main_when_the_focused_window_is_not_ready() {
+        let state = WindowState::default();
+        state.mark_ready_and_drain("main".into());
+        state
+            .focused_label
+            .lock()
+            .unwrap()
+            .replace("editor-1".into());
+        assert_eq!(state.ready_target().as_deref(), Some("main"));
+    }
+
+    #[test]
+    fn has_no_target_before_any_frontend_is_ready() {
+        let state = WindowState::default();
+        assert_eq!(state.ready_target(), None);
+    }
 }

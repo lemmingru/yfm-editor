@@ -6,6 +6,10 @@ import react from '@vitejs/plugin-react';
 // this fixed URL in the native WKWebView window.
 export default defineConfig({
   plugins: [react()],
+  test: {
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.ts',
+  },
   // Prevent Vite from obscuring Rust compile errors.
   clearScreen: false,
   server: {

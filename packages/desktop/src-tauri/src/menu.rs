@@ -217,3 +217,21 @@ pub(crate) fn build_app_menu(
         .items(&[&app_menu, &file_menu, &edit_menu, &window_menu, &view_menu])
         .build()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::escape_menu_text;
+
+    #[test]
+    fn escapes_native_menu_mnemonic_markers() {
+        assert_eq!(
+            escape_menu_text("Research & Development"),
+            "Research && Development"
+        );
+        assert_eq!(
+            escape_menu_text("Already && escaped"),
+            "Already &&&& escaped"
+        );
+        assert_eq!(escape_menu_text("Plain"), "Plain");
+    }
+}

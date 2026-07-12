@@ -21,6 +21,8 @@
     "app:build": "npm run app:build -w @yfm-editor/desktop",
     "tauri": "npm run tauri -w @yfm-editor/desktop",
     "tauri:doctor": "npm run tauri:doctor -w @yfm-editor/desktop",
+    "test": "npm run test --workspaces --if-present",
+    "test:rust": "cargo test --manifest-path packages/desktop/src-tauri/Cargo.toml",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "devDependencies": {

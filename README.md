@@ -67,6 +67,57 @@ Output lands in `src-tauri/target/release/bundle/`. To make it the default Markd
 handler: in Finder, right-click a `.md` file → Get Info → Open with → choose
 **YFM Editor** → Change All.
 
+## Tests
+
+The project uses two complementary test systems:
+
+- [Vitest](https://vitest.dev) with jsdom and Testing Library tests the React
+  workflow, persisted preferences and recent files, and the TypeScript-to-Tauri
+  command contract. Tauri, native dialogs, and the editor component are mocked
+  in these tests so they stay fast and do not open application windows.
+- Rust's built-in test runner tests filesystem helpers, content hashing, native
+  menu escaping, and cold-start/focused-window routing state.
+
+Run the complete JavaScript/TypeScript test suite once:
+
+```bash
+npm test
+```
+
+Run frontend tests in watch mode while developing:
+
+```bash
+npm run test:watch -w @yfm-editor/desktop
+```
+
+Run the Rust tests from the repository root:
+
+```bash
+npm run test:rust
+```
+
+Run the static TypeScript checks as an additional regression check:
+
+```bash
+npm run typecheck
+```
+
+Before merging a change that affects files, windows, or the native lifecycle,
+run all three checks:
+
+```bash
+npm test
+npm run test:rust
+npm run typecheck
+```
+
+The automated React suite covers cold-start file loading, Save As for a dirty
+untitled document, and protection of dirty content after an external file
+change. It does not launch the real macOS WebView or exercise Finder events and
+native menus end to end. Changes to those integrations should additionally be
+smoke-tested with `npm run app` by opening, editing, saving, externally changing,
+and closing a document.
+
 ## Use
 
 - **File ▸ New** (⌘N), **Open…** (⌘O), **Save** (⌘S), **Save As…** (⇧⌘S) from the
@@ -80,16 +131,16 @@ handler: in Finder, right-click a `.md` file → Get Info → Open with → choo
 
 ## How it works
 
-- `src-tauri/` is the Rust core: `read_file` / `write_file` commands over `std::fs`,
-  the native macOS menu (emitting `menu-action` events), single-instance handling,
-  and `RunEvent::Opened` for Finder "open with" (buffered for cold starts via
-  `frontend_ready`).
+- `src-tauri/src/files.rs` owns file commands and external-change watchers;
+  `menu.rs`, `windows.rs`, and `platform.rs` contain native menus, window/open
+  routing, and platform-specific integration. `lib.rs` composes those modules
+  into the Tauri application.
 - `src/api/client.ts` calls those commands through Tauri `invoke` and uses
   `@tauri-apps/plugin-dialog` for native open/save dialogs.
 - `src/App.tsx` is the single-document shell: state, native-menu wiring, window
   title, and the unsaved-changes guard.
-- `src/components/EditorPane.tsx` wraps `useMarkdownEditor` with the `full` preset
-  (all YFM extensions). The split preview renders HTML via `@diplodoc/transform`.
+- The shared `@yfm-editor/core` package owns `EditorPane` and the YFM editor
+  configuration used by the desktop application and future integrations.
 
 ## Roadmap
 
