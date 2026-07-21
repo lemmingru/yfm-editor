@@ -12,6 +12,7 @@ describe('preferences', () => {
       language: 'system',
       defaultMode: 'wysiwyg',
       openBehavior: 'newWindow',
+      spellcheck: true,
     });
     localStorage.setItem(key, '{broken');
     expect(loadPreferences().defaultMode).toBe('wysiwyg');
@@ -40,6 +41,7 @@ describe('preferences', () => {
       language: 'ru' as const,
       defaultMode: 'markup' as const,
       openBehavior: 'sameWindow' as const,
+      spellcheck: false,
     };
     savePreferences(prefs);
     expect(JSON.parse(localStorage.getItem(key)!)).toEqual(prefs);
@@ -61,6 +63,7 @@ describe('preferences', () => {
         language: 'system',
         defaultMode: 'wysiwyg',
         openBehavior: 'newWindow',
+        spellcheck: true,
       }),
     ).not.toThrow();
   });

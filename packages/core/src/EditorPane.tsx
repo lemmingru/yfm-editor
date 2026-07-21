@@ -28,6 +28,7 @@ import {transform as latexTransform} from '@diplodoc/latex-extension';
 import {useLatex} from '@diplodoc/latex-extension/react';
 import {transform as mermaidTransform} from '@diplodoc/mermaid-extension';
 import {useMermaid} from '@diplodoc/mermaid-extension/react';
+import {EditorView} from '@codemirror/view';
 import type {EditingMode} from './types';
 
 // Keep Diplodoc's full YFM support (including multiline tables) and add rich blocks.
@@ -144,6 +145,11 @@ type Props = {
   markup: string;
   /** Initial editing mode (wysiwyg / markup); applied at mount. */
   mode: EditingMode;
+  /**
+   * Enables native webview spell checking on the editable content. Applied at
+   * mount; the parent remounts (via key) when this changes.
+   */
+  spellcheck: boolean;
   /** Reports whether the document differs from the last saved/loaded state. */
   onDirtyChange: (dirty: boolean) => void;
   /** Called when the editor emits a submit (Cmd+Enter). */
@@ -399,6 +405,7 @@ function formatAgentContext(filePath: string, context: AgentContext): string {
 export function EditorPane({
   markup,
   mode,
+  spellcheck,
   onDirtyChange,
   onSubmit,
   registerGetValue,
@@ -412,13 +419,26 @@ export function EditorPane({
     [],
   );
 
+  // CodeMirror forces `spellcheck="false"` on its content; override the facet
+  // to opt back in. ProseMirror is controlled via `baseStyles.attributes` below.
+  const markupSpellcheck = spellcheck
+    ? [
+        EditorView.contentAttributes.of({
+          spellcheck: 'true',
+          autocorrect: 'on',
+          autocapitalize: 'on',
+        }),
+      ]
+    : [];
+
   const editor = useMarkdownEditor({
     preset: 'full',
     md: {html: true, linkify: true},
     initial: {markup, mode},
-    markupConfig: {renderPreview, splitMode: 'horizontal'},
+    markupConfig: {renderPreview, splitMode: 'horizontal', extensions: markupSpellcheck},
     wysiwygConfig: {
       escapeConfig: wysiwygEscapeConfig,
+      extensionOptions: {baseStyles: {attributes: {spellcheck: spellcheck ? 'true' : 'false'}}},
       extensions: (builder) => {
         builder.use(LatexExtension, {
           loadRuntimeScript: loadLatexRuntime,

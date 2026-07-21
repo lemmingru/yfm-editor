@@ -7,7 +7,9 @@ mod windows;
 use tauri::{Emitter, Manager};
 
 use crate::files::{read_file, unwatch_file, watch_file, write_file};
-use crate::menu::{build_app_menu, set_menu_labels, update_recent_files_menu, MenuLabels};
+use crate::menu::{
+    build_app_menu, set_menu_labels, set_spellcheck_checked, update_recent_files_menu, MenuLabels,
+};
 use crate::platform::{set_document_edited, set_represented_file};
 use crate::state::AppState;
 use crate::windows::{
@@ -66,7 +68,7 @@ pub fn run() {
                 .lock()
                 .unwrap()
                 .replace("main".into());
-            let menu = build_app_menu(app.handle(), &[], &MenuLabels::default())?;
+            let menu = build_app_menu(app.handle(), &[], &MenuLabels::default(), true)?;
             app.set_menu(menu)?;
             Ok(())
         })
@@ -81,6 +83,7 @@ pub fn run() {
             write_file,
             update_recent_files_menu,
             set_menu_labels,
+            set_spellcheck_checked,
             frontend_ready,
             set_document_edited,
             set_represented_file,

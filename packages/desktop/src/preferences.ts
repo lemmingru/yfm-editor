@@ -14,6 +14,7 @@ export type Preferences = {
   language: LanguagePref;
   defaultMode: EditorMode;
   openBehavior: OpenBehaviorPref;
+  spellcheck: boolean;
 };
 
 const STORAGE_KEY = 'yfm-editor.preferences';
@@ -25,6 +26,8 @@ const DEFAULTS: Preferences = {
   defaultMode: 'wysiwyg',
   // macOS-native default: each opened document gets its own window.
   openBehavior: 'newWindow',
+  // Native webview spell checking, on by default.
+  spellcheck: true,
 };
 
 export function loadPreferences(): Preferences {
@@ -42,6 +45,9 @@ export function loadPreferences(): Preferences {
     }
     if (merged.openBehavior !== 'newWindow' && merged.openBehavior !== 'sameWindow') {
       merged.openBehavior = DEFAULTS.openBehavior;
+    }
+    if (typeof merged.spellcheck !== 'boolean') {
+      merged.spellcheck = DEFAULTS.spellcheck;
     }
     return merged;
   } catch {

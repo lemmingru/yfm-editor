@@ -26,6 +26,7 @@ vi.mock('./api/client', () => ({
   setDocumentEdited: mocks.setDocumentEdited,
   updateRecentFilesMenu: mocks.updateRecentFilesMenu,
   setMenuLabels: mocks.setMenuLabels,
+  setSpellcheckChecked: vi.fn().mockResolvedValue(undefined),
   requestQuit: vi.fn().mockResolvedValue(undefined),
   cancelQuit: vi.fn().mockResolvedValue(undefined),
   openFileWindow: vi.fn().mockResolvedValue(undefined),

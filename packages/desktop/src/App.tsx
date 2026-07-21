@@ -30,6 +30,7 @@ import {
   setDocumentEdited,
   updateRecentFilesMenu,
   setMenuLabels,
+  setSpellcheckChecked,
   requestQuit,
   cancelQuit,
   openFileWindow,
@@ -400,6 +401,7 @@ function Workspace({
     preferences: () => setPrefsOpen(true),
     'toggle-theme': () =>
       onUpdatePrefs({theme: resolvedTheme === 'light' ? 'dark' : 'light'}),
+    'toggle-spellcheck': () => onUpdatePrefs({spellcheck: !prefs.spellcheck}),
     quit: handleQuit,
     'recent-clear': clearRecentFiles,
     ...Object.fromEntries(
@@ -453,6 +455,12 @@ function Workspace({
     setMenuLabels(buildMenuLabels(resolvedLang)).catch(() => {});
   }, [resolvedLang]);
 
+  // Keep the native "Check Spelling" menu checkmark in sync with the preference,
+  // including at startup and after another window toggles it (via prefs-updated).
+  React.useEffect(() => {
+    setSpellcheckChecked(prefs.spellcheck).catch(() => {});
+  }, [prefs.spellcheck]);
+
   // Cold-start: tell Rust we're ready and open any buffered Finder request.
   React.useEffect(() => {
     frontendReady()
@@ -494,9 +502,10 @@ function Workspace({
   return (
     <div className="app">
       <EditorPane
-        key={`${docKey}:${activeMode}`}
+        key={`${docKey}:${activeMode}:${prefs.spellcheck}`}
         markup={markup}
         mode={activeMode}
+        spellcheck={prefs.spellcheck}
         onDirtyChange={setDirty}
         onSubmit={() => void handleSave()}
         registerGetValue={(fn) => (getValueRef.current = fn)}

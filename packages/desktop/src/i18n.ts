@@ -29,6 +29,7 @@ export type MenuLabels = {
   bringAllToFront: string;
   view: string;
   toggleTheme: string;
+  spellCheck: string;
 };
 
 const messages = {
@@ -137,6 +138,7 @@ const menuLabels: Record<Lang, MenuLabels> = {
     bringAllToFront: 'Bring All to Front',
     view: 'View',
     toggleTheme: 'Toggle Theme',
+    spellCheck: 'Check Spelling',
   },
   ru: {
     preferences: 'Настройки…',
@@ -164,6 +166,7 @@ const menuLabels: Record<Lang, MenuLabels> = {
     bringAllToFront: 'Все окна на передний план',
     view: 'Вид',
     toggleTheme: 'Переключить тему',
+    spellCheck: 'Проверка орфографии',
   },
 };
 

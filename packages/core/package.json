@@ -15,6 +15,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@codemirror/view": "^6.43.4",
     "@diplodoc/cut-extension": "^1.1.1",
     "@diplodoc/file-extension": "^0.2.1",
     "@diplodoc/folding-headings-extension": "^0.1.2",

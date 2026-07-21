@@ -1,7 +1,9 @@
 use std::sync::Mutex;
 
 use serde::Deserialize;
-use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder, WINDOW_SUBMENU_ID};
+use tauri::menu::{
+    CheckMenuItemBuilder, MenuBuilder, MenuItemBuilder, SubmenuBuilder, WINDOW_SUBMENU_ID,
+};
 use tauri::State;
 
 use crate::state::AppState;
@@ -39,6 +41,7 @@ pub(crate) struct MenuLabels {
     bring_all_to_front: String,
     view: String,
     toggle_theme: String,
+    spell_check: String,
 }
 
 impl Default for MenuLabels {
@@ -69,14 +72,26 @@ impl Default for MenuLabels {
             bring_all_to_front: "Bring All to Front".into(),
             view: "View".into(),
             toggle_theme: "Toggle Theme".into(),
+            spell_check: "Check Spelling".into(),
         }
     }
 }
 
-#[derive(Default)]
 pub(crate) struct MenuState {
     recent_files: Mutex<Vec<RecentFileMenuItem>>,
     labels: Mutex<MenuLabels>,
+    spellcheck_enabled: Mutex<bool>,
+}
+
+impl Default for MenuState {
+    fn default() -> Self {
+        Self {
+            recent_files: Mutex::new(Vec::new()),
+            labels: Mutex::new(MenuLabels::default()),
+            // Mirrors the frontend preference default (spellcheck on).
+            spellcheck_enabled: Mutex::new(true),
+        }
+    }
 }
 
 #[tauri::command]
@@ -99,10 +114,22 @@ pub(crate) fn set_menu_labels(
     rebuild_app_menu(&app, &state)
 }
 
+#[tauri::command]
+pub(crate) fn set_spellcheck_checked(
+    app: tauri::AppHandle,
+    state: State<AppState>,
+    enabled: bool,
+) -> Result<(), String> {
+    *state.menu.spellcheck_enabled.lock().unwrap() = enabled;
+    rebuild_app_menu(&app, &state)
+}
+
 fn rebuild_app_menu(app: &tauri::AppHandle, state: &State<AppState>) -> Result<(), String> {
     let recent_files = state.menu.recent_files.lock().unwrap().clone();
     let labels = state.menu.labels.lock().unwrap().clone();
-    let menu = build_app_menu(app, &recent_files, &labels).map_err(|e| e.to_string())?;
+    let spellcheck_enabled = *state.menu.spellcheck_enabled.lock().unwrap();
+    let menu = build_app_menu(app, &recent_files, &labels, spellcheck_enabled)
+        .map_err(|e| e.to_string())?;
     app.set_menu(menu).map(|_| ()).map_err(|e| e.to_string())
 }
 
@@ -137,6 +164,7 @@ pub(crate) fn build_app_menu(
     app: &tauri::AppHandle,
     recent_files: &[RecentFileMenuItem],
     labels: &MenuLabels,
+    spellcheck_enabled: bool,
 ) -> tauri::Result<tauri::menu::Menu<tauri::Wry>> {
     let preferences = MenuItemBuilder::with_id("preferences", &labels.preferences)
         .accelerator("CmdOrCtrl+,")
@@ -209,8 +237,13 @@ pub(crate) fn build_app_menu(
     let toggle_theme = MenuItemBuilder::with_id("toggle-theme", &labels.toggle_theme)
         .accelerator("CmdOrCtrl+Shift+L")
         .build(app)?;
+    let spell_check = CheckMenuItemBuilder::with_id("toggle-spellcheck", &labels.spell_check)
+        .checked(spellcheck_enabled)
+        .build(app)?;
     let view_menu = SubmenuBuilder::new(app, &labels.view)
         .item(&toggle_theme)
+        .separator()
+        .item(&spell_check)
         .build()?;
 
     MenuBuilder::new(app)

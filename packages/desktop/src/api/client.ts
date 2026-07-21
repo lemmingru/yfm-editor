@@ -48,6 +48,11 @@ export function setMenuLabels(labels: MenuLabels): Promise<void> {
   return invoke<void>('set_menu_labels', {labels});
 }
 
+/** Sync the native "Check Spelling" menu checkmark with the current preference. */
+export function setSpellcheckChecked(enabled: boolean): Promise<void> {
+  return invoke<void>('set_spellcheck_checked', {enabled});
+}
+
 /** Ask Rust to close all windows; each window can still cancel via its close guard. */
 export function requestQuit(): Promise<void> {
   return invoke<void>('request_quit');
