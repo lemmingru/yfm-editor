@@ -1,5 +1,7 @@
 # YFM Editor
 
+**English** | [Русский](README.ru.md)
+
 A native macOS (and cross-platform) editor for Markdown files written in
 [YFM](https://ydocs.tech) (Yandex Flavored Markdown), built on
 [`@gravity-ui/markdown-editor`](https://github.com/gravity-ui/markdown-editor)
@@ -7,12 +9,18 @@ and packaged with [Tauri 2](https://v2.tauri.app).
 
 Supports WYSIWYG + raw-markup + split-preview editing, with native handling of
 YFM **multiline tables**, **cuts** (`{% cut %}`), **notes** (`{% note %}`), tabs,
-files, LaTeX and Mermaid.
+files, LaTeX and Mermaid. Native spell checking and an English/Russian interface
+are built in.
 
-A single-document editor: open one `.md` file at a time via the native menu or by
-double-clicking it in Finder (it can be set as the default `.md` handler). The UI
-renders in the system WebView (WKWebView on macOS); file reads/writes go through
-the Rust core, so there is no HTTP server and no exposed filesystem API.
+Document-based, like native macOS editors: each window holds one `.md` file, and
+opening a file gives it a new window by default (switchable to reuse the current
+window in Preferences). Files are opened from the native menu or by
+double-clicking them in Finder (the app can be set as the default `.md` handler).
+The UI renders in the system WebView (WKWebView on macOS); file reads/writes go
+through the Rust core, so there is no HTTP server and no exposed filesystem API.
+
+The repository is an npm workspaces monorepo: `packages/core` holds the shared,
+platform-agnostic editor, and `packages/desktop` holds the Tauri application.
 
 ## Requirements
 
@@ -63,9 +71,64 @@ Produces a `.app` (and `.dmg`) bundle:
 npm run app:build   # = tauri build
 ```
 
-Output lands in `src-tauri/target/release/bundle/`. To make it the default Markdown
-handler: in Finder, right-click a `.md` file → Get Info → Open with → choose
-**YFM Editor** → Change All.
+Output lands in `packages/desktop/src-tauri/target/release/bundle/`: the app in
+`macos/YFM Editor.app` and an installer image in `dmg/`.
+
+## Install a local build (unsigned app)
+
+The build is signed ad-hoc, not with a Developer ID, and it is not notarized.
+Gatekeeper therefore refuses to launch it as soon as the bundle carries the
+`com.apple.quarantine` attribute — which macOS attaches to anything downloaded or
+received from another machine, including the `.dmg`. The failure looks like
+*"YFM Editor is damaged and can't be opened"* or *"cannot be opened because the
+developer cannot be verified"*.
+
+Copy the app to `/Applications` (or drag it out of the mounted `.dmg`) and then
+clear the attribute:
+
+```bash
+xattr -dr com.apple.quarantine "/Applications/YFM Editor.app"
+```
+
+After that the app opens normally, including from Finder double-clicks and file
+associations. A few notes:
+
+- Only do this for a bundle you built or trust; the command disables the
+  Gatekeeper check for that app.
+- Running the `.app` straight from `target/release/bundle/macos/` usually needs no
+  `xattr` at all, since a locally built bundle is not quarantined.
+- Re-run the command after every new build you install — the attribute comes back
+  with the freshly transferred bundle.
+- Alternative for a one-off launch: right-click the app → **Open** → **Open**
+  in the confirmation dialog (on recent macOS versions, System Settings →
+  Privacy & Security → **Open Anyway**).
+- Signing with a Developer ID (`APPLE_SIGNING_IDENTITY`) and notarizing removes
+  the need for any of this.
+
+To make the app the default Markdown handler: in Finder, right-click a `.md` file
+→ Get Info → Open with → choose **YFM Editor** → Change All.
+
+## Use
+
+- **File ▸ New** (⌘N), **Open…** (⌘O), **Open Recent**, **Save** (⌘S),
+  **Save As…** (⇧⌘S), **Revert to Saved** from the native menu.
+- **View ▸ Toggle Theme** (⇧⌘L) and **Check Spelling** switch the theme and the
+  native WebView spell checker.
+- **Edit ▸ Copy Agent Context** (⌥⌘C) copies `path:line` (or `path:start-end`) plus
+  the selected — or current block's — markdown in a fenced block, ready to paste
+  into a coding agent. In WYSIWYG mode the selection cannot always be mapped back
+  to the source; the app then asks you to switch to markup mode.
+- **Preferences…** (⌘,) sets theme, interface language (English/Russian/system),
+  the default editor mode, whether an opened document reuses the current window,
+  and spell checking.
+- Edit in **WYSIWYG** (default) or **markup**, or open the **split preview** using
+  the editor toolbar.
+- Unsaved changes show up as a `*` in the window title plus the macOS
+  edited-document dot in the close button; the status bar shows the document's
+  folder, or "Not saved to disk yet". You are warned before discarding unsaved
+  changes and before overwriting a file that changed on disk.
+- Double-clicking a `.md` file in Finder opens it; if the app is already running
+  the open is near-instant (the process stays resident).
 
 ## Tests
 
@@ -121,27 +184,18 @@ native menus end to end. Changes to those integrations should additionally be
 smoke-tested with `npm run app` by opening, editing, saving, externally changing,
 and closing a document.
 
-## Use
-
-- **File ▸ New** (⌘N), **Open…** (⌘O), **Save** (⌘S), **Save As…** (⇧⌘S) from the
-  native menu. **Preferences…** (⌘,) sets theme and the default editor mode.
-- Edit in **markup** (default) or **WYSIWYG**, or open the **split preview** using
-  the editor toolbar.
-- A "● unsaved" marker and the window title dot indicate unsaved changes; you are
-  warned before opening another file or closing the window with unsaved edits.
-- Double-clicking a `.md` file in Finder opens it; if the app is already running
-  the open is near-instant (the process stays resident).
-
 ## How it works
 
-- `src-tauri/src/files.rs` owns file commands and external-change watchers;
-  `menu.rs`, `windows.rs`, and `platform.rs` contain native menus, window/open
-  routing, and platform-specific integration. `lib.rs` composes those modules
-  into the Tauri application.
-- `src/api/client.ts` calls those commands through Tauri `invoke` and uses
-  `@tauri-apps/plugin-dialog` for native open/save dialogs.
-- `src/App.tsx` is the single-document shell: state, native-menu wiring, window
-  title, and the unsaved-changes guard.
+- `packages/desktop/src-tauri/src/files.rs` owns file commands and external-change
+  watchers; `menu.rs`, `windows.rs`, and `platform.rs` contain native menus,
+  window/open routing, and platform-specific integration, with shared state in
+  `state.rs`. `lib.rs` composes those modules into the Tauri application.
+- `packages/desktop/src/api/client.ts` calls those commands through Tauri `invoke`
+  and uses `@tauri-apps/plugin-dialog` for native open/save dialogs.
+- `packages/desktop/src/App.tsx` is the per-window document shell: state,
+  native-menu wiring, window title, and the unsaved-changes guard. `preferences.ts`
+  and `recentFiles.ts` persist settings and the recent-files list; `i18n.ts` holds
+  the English and Russian strings, including the native menu labels sent to Rust.
 - The shared `@yfm-editor/core` package owns `EditorPane` and the YFM editor
   configuration used by the desktop application and future integrations.
   `markdownFormatting.ts` adjusts how the WYSIWYG mode writes markdown back out,
@@ -151,6 +205,8 @@ and closing a document.
 ## Roadmap
 
 - Toolbar insert buttons for Mermaid and KaTeX (extensions already bundled).
+- A VS Code extension reusing `@yfm-editor/core`.
+- A signed and notarized build, so no `xattr` step is needed.
 
 ## Acknowledgments
 
