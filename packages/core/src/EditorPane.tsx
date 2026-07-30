@@ -1,7 +1,7 @@
 import React from 'react';
 import {createPortal} from 'react-dom';
 import {MarkdownEditorView, useMarkdownEditor} from '@gravity-ui/markdown-editor';
-import type {EscapeConfig, RenderPreview, ToolbarsPreset, ToolbarOrders} from '@gravity-ui/markdown-editor';
+import type {RenderPreview, ToolbarsPreset, ToolbarOrders} from '@gravity-ui/markdown-editor';
 import {LatexExtension} from '@gravity-ui/markdown-editor-latex-extension';
 import {
   latexBlockItemMarkup,
@@ -29,6 +29,7 @@ import {useLatex} from '@diplodoc/latex-extension/react';
 import {transform as mermaidTransform} from '@diplodoc/mermaid-extension';
 import {useMermaid} from '@diplodoc/mermaid-extension/react';
 import {EditorView} from '@codemirror/view';
+import {GitFriendlyFormatting, wysiwygEscapeConfig} from './markdownFormatting';
 import type {EditingMode} from './types';
 
 // Keep Diplodoc's full YFM support (including multiline tables) and add rich blocks.
@@ -38,11 +39,6 @@ const previewPlugins = [
   latexTransform({bundle: false, validate: false}),
   mermaidTransform({bundle: false}),
 ];
-
-const wysiwygEscapeConfig: EscapeConfig = {
-  // Preserve issue tags like [ЭКСП] / [ЛС] when WYSIWYG re-serializes markdown.
-  commonEscape: /[`\^+*\\|~{}<>$]/g,
-};
 
 // A formula dropdown (inline + block) placed right after the code button, so it
 // sits in the same group as `code`, mirroring Yandex Tracker's toolbar layout.
@@ -289,8 +285,8 @@ function stripInlineMarkdown(text: string): string {
     .replace(/~~([^~]+)~~/g, '$1')
     .replace(/(^|[^*])\*([^*]+)\*(?!\*)/g, '$1$2')
     .replace(/(^|[^_])_([^_]+)_(?!_)/g, '$1$2')
-    // Drop backslash escapes so WYSIWYG-serialized lines (which may escape
-    // characters differently than the source) still match, e.g. `\[ЛС]`.
+    // Drop backslash escapes so a selection still matches a source line that
+    // escapes the same text differently, e.g. a legacy `# 1\. Заголовок`.
     .replace(/\\([\\`*_{}[\]()#+\-.!~|>^$])/g, '$1');
 }
 
@@ -447,6 +443,7 @@ export function EditorPane({
         builder.use(Mermaid, {
           loadRuntimeScript: loadMermaidRuntime,
         });
+        builder.use(GitFriendlyFormatting);
       },
     },
   });

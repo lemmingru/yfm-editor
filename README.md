@@ -75,6 +75,9 @@ The project uses two complementary test systems:
   workflow, persisted preferences and recent files, and the TypeScript-to-Tauri
   command contract. Tauri, native dialogs, and the editor component are mocked
   in these tests so they stay fast and do not open application windows.
+  A second Vitest project in `packages/core` round-trips markdown through the
+  WYSIWYG document model, guarding documents kept in version control against
+  reformatting the author did not ask for.
 - Rust's built-in test runner tests filesystem helpers, content hashing, native
   menu escaping, and cold-start/focused-window routing state.
 
@@ -141,6 +144,9 @@ and closing a document.
   title, and the unsaved-changes guard.
 - The shared `@yfm-editor/core` package owns `EditorPane` and the YFM editor
   configuration used by the desktop application and future integrations.
+  `markdownFormatting.ts` adjusts how the WYSIWYG mode writes markdown back out,
+  so opening and saving a file does not rewrite constructs the author left
+  untouched (escaped characters, table padding, blank lines).
 
 ## Roadmap
 
