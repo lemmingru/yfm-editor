@@ -92,6 +92,8 @@ vi.mock('@yfm-editor/core', () => ({
     registerReplaceContent,
     registerCopyAgentContext,
     reloadBanner,
+    outlineOpen,
+    onOutlineOpenChange,
   }: {
     markup: string;
     onDirtyChange: (dirty: boolean) => void;
@@ -100,6 +102,8 @@ vi.mock('@yfm-editor/core', () => ({
     registerReplaceContent: (fn: (value: string) => void) => void;
     registerCopyAgentContext: (fn: () => Promise<{status: 'no-context'}>) => void;
     reloadBanner: React.ReactNode;
+    outlineOpen: boolean;
+    onOutlineOpenChange: (open: boolean) => void;
   }) => {
     registerGetValue(() => 'edited content');
     registerMarkSaved(() => onDirtyChange(false));
@@ -109,6 +113,8 @@ vi.mock('@yfm-editor/core', () => ({
       <div>
         <output data-testid="markup">{markup}</output>
         <button onClick={() => onDirtyChange(true)}>make-dirty</button>
+        <output data-testid="outline-open">{String(outlineOpen)}</output>
+        <button onClick={() => onOutlineOpenChange(!outlineOpen)}>outline-toggle</button>
         {reloadBanner}
       </div>
     );
@@ -177,5 +183,28 @@ describe('desktop application workflow', () => {
 
     expect(await screen.findByText('fileChangedBanner')).toBeInTheDocument();
     expect(mocks.fetchFile).toHaveBeenCalledTimes(1);
+  });
+
+  it('toggles the outline from the native menu, restores it for the file, and defaults a new document to closed', async () => {
+    localStorage.setItem('yfm-editor.preferences', JSON.stringify({openBehavior: 'sameWindow'}));
+    mocks.frontendReady.mockResolvedValue(['/cold.md']);
+    render(<App />);
+    await screen.findByText('# Cold start');
+    expect(screen.getByTestId('outline-open')).toHaveTextContent('false');
+    act(() => mocks.windowListeners.get('menu-action')!({payload: 'toggle-outline'}));
+    expect(screen.getByTestId('outline-open')).toHaveTextContent('true');
+    expect(mocks.setDocumentEdited).toHaveBeenLastCalledWith(false);
+    await act(async () => mocks.windowListeners.get('menu-action')!({payload: 'new'}));
+    expect(screen.getByTestId('outline-open')).toHaveTextContent('false');
+    await act(async () => mocks.windowListeners.get('open-file')!({payload: '/cold.md'}));
+    expect(screen.getByTestId('outline-open')).toHaveTextContent('true');
+  });
+
+  it('keeps the outline state when an untitled document is saved', async () => {
+    render(<App />);
+    fireEvent.click(screen.getByText('outline-toggle'));
+    await act(async () => mocks.windowListeners.get('menu-action')!({payload: 'save'}));
+    await waitFor(() => expect(mocks.saveFile).toHaveBeenCalled());
+    expect(JSON.parse(localStorage.getItem('yfm-editor.outline-documents')!)).toContain('/saved.md');
   });
 });

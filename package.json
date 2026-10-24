@@ -1,7 +1,7 @@
 {
   "name": "yfm-editor-monorepo",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Monorepo for the YFM editor: a shared platform-agnostic core plus a Tauri desktop app (a VS Code extension is planned).",
   "license": "MIT",
   "author": "Alexey Melekhin",
@@ -26,9 +26,13 @@
     "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "devDependencies": {
-    "@types/node": "^20.19.43",
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
-    "typescript": "^5.6.3"
+    "@types/node": "^24.0.0",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": "^24.0.0 || >=26.0.0",
+    "npm": ">=11.5.1"
   }
 }

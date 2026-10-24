@@ -30,10 +30,19 @@ export type MenuLabels = {
   view: string;
   toggleTheme: string;
   spellCheck: string;
+  toggleOutline: string;
 };
 
 const messages = {
   en: {
+    outlineTitle: 'Document outline',
+    outlineShow: 'Show document outline',
+    outlineHide: 'Hide document outline',
+    outlineEmpty: 'There are no headings yet. Add headings to navigate between sections.',
+    outlineUntitled: 'Untitled heading',
+    outlineExpand: 'Expand section',
+    outlineCollapse: 'Collapse section',
+    outlineUnavailable: 'The outline will appear when the Markdown structure is complete.',
     unsavedChangesTitle: 'Unsaved changes',
     unsavedDiscardQuestion: 'You have unsaved changes. Discard them?',
     unsavedCloseQuestion: 'You have unsaved changes. Close without saving?',
@@ -72,6 +81,14 @@ const messages = {
     openBehaviorHint: 'New window is the native macOS behavior for documents.',
   },
   ru: {
+    outlineTitle: 'Структура документа',
+    outlineShow: 'Показать структуру документа',
+    outlineHide: 'Скрыть структуру документа',
+    outlineEmpty: 'В документе пока нет заголовков. Добавьте заголовки, чтобы переходить между разделами.',
+    outlineUntitled: 'Заголовок без названия',
+    outlineExpand: 'Развернуть раздел',
+    outlineCollapse: 'Свернуть раздел',
+    outlineUnavailable: 'Структура появится, когда разметка документа будет завершена.',
     unsavedChangesTitle: 'Несохранённые изменения',
     unsavedDiscardQuestion: 'Есть несохранённые изменения. Отбросить их?',
     unsavedCloseQuestion: 'Есть несохранённые изменения. Закрыть без сохранения?',
@@ -139,6 +156,7 @@ const menuLabels: Record<Lang, MenuLabels> = {
     view: 'View',
     toggleTheme: 'Toggle Theme',
     spellCheck: 'Check Spelling',
+    toggleOutline: 'Document Outline',
   },
   ru: {
     preferences: 'Настройки…',
@@ -167,6 +185,7 @@ const menuLabels: Record<Lang, MenuLabels> = {
     view: 'Вид',
     toggleTheme: 'Переключить тему',
     spellCheck: 'Проверка орфографии',
+    toggleOutline: 'Структура документа',
   },
 };
 

@@ -1,4 +1,4 @@
-import {defineConfig} from 'vite';
+import {defineConfig} from 'vitest/config';
 import react from '@vitejs/plugin-react';
 
 // The Tauri core (src-tauri) provides file access via the read_file/write_file
@@ -6,6 +6,11 @@ import react from '@vitejs/plugin-react';
 // this fixed URL in the native WKWebView window.
 export default defineConfig({
   plugins: [react()],
+  // Preserve Vite 5's browser targets for the system WebView. Vite 8's
+  // default would silently raise the required Safari/macOS version.
+  build: {
+    target: ['chrome87', 'edge88', 'firefox78', 'safari14'],
+  },
   test: {
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',

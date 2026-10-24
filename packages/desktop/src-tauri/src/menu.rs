@@ -42,6 +42,7 @@ pub(crate) struct MenuLabels {
     view: String,
     toggle_theme: String,
     spell_check: String,
+    toggle_outline: String,
 }
 
 impl Default for MenuLabels {
@@ -73,6 +74,7 @@ impl Default for MenuLabels {
             view: "View".into(),
             toggle_theme: "Toggle Theme".into(),
             spell_check: "Check Spelling".into(),
+            toggle_outline: "Document Outline".into(),
         }
     }
 }
@@ -240,7 +242,11 @@ pub(crate) fn build_app_menu(
     let spell_check = CheckMenuItemBuilder::with_id("toggle-spellcheck", &labels.spell_check)
         .checked(spellcheck_enabled)
         .build(app)?;
+    let toggle_outline = MenuItemBuilder::with_id("toggle-outline", &labels.toggle_outline)
+        .accelerator("CmdOrCtrl+Alt+O")
+        .build(app)?;
     let view_menu = SubmenuBuilder::new(app, &labels.view)
+        .item(&toggle_outline)
         .item(&toggle_theme)
         .separator()
         .item(&spell_check)

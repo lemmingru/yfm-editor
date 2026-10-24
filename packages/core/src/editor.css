@@ -9,6 +9,127 @@
   flex: 0 0 auto;
 }
 
+.document-workspace {
+  display: flex;
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.document-outline[hidden] {
+  display: none;
+}
+
+.document-outline {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 clamp(220px, 23vw, 300px);
+  min-width: 0;
+  overflow: hidden;
+  background: var(--g-color-base-background);
+  border-right: 1px solid var(--g-color-line-generic);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.document-outline__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 8px 0 16px;
+  border-bottom: 1px solid var(--g-color-line-generic);
+}
+
+.document-outline__contents {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding: 12px 8px;
+  overscroll-behavior: contain;
+}
+
+.document-outline__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.document-outline__list .document-outline__list {
+  padding-left: 14px;
+}
+
+.document-outline__row {
+  display: flex;
+  align-items: flex-start;
+}
+
+.document-outline__heading,
+.document-outline__fold {
+  border: 0;
+  background: none;
+  color: var(--g-color-text-primary);
+  font: inherit;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.document-outline__heading {
+  flex: 1;
+  min-width: 0;
+  padding: 6px;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.document-outline__fold,
+.document-outline__fold-spacer {
+  flex: 0 0 20px;
+  width: 20px;
+  box-sizing: border-box;
+  padding: 6px 0;
+}
+
+.document-outline__heading:hover,
+.document-outline__fold:hover {
+  background: var(--g-color-base-simple-hover);
+}
+
+.document-outline__heading[aria-current] {
+  color: var(--g-color-text-brand);
+  background: var(--g-color-base-selection);
+}
+
+.document-outline__heading:focus-visible,
+.document-outline__fold:focus-visible {
+  outline: 2px solid var(--g-color-line-brand);
+  outline-offset: -2px;
+}
+
+.document-outline__empty {
+  margin: 4px 8px;
+  color: var(--g-color-text-secondary);
+}
+
+.document-outline-toggle > span {
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 800px) {
+  .document-outline {
+    position: absolute;
+    top: 37px;
+    bottom: 0;
+    left: 0;
+    width: min(300px, 80%);
+    z-index: 2050;
+    box-shadow: 4px 0 16px #0002;
+  }
+}
+
 .main__editor {
   /* Roomier gutters; inner editor/preview inherit this custom property. */
   --g-md-editor-padding: 24px;
@@ -17,6 +138,7 @@
 
   flex: 1;
   min-height: 0;
+  min-width: 0;
   overflow: auto;
 }
 

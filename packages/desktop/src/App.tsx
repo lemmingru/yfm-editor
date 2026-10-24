@@ -49,6 +49,7 @@ import {
   type ThemePref,
 } from './preferences';
 import {buildMenuLabels, I18nProvider, resolveLang, useI18n} from './i18n';
+import {loadOutlineOpen, saveOutlineOpen} from './documentViewState';
 import {
   buildRecentFileMenuItems,
   loadRecentFiles,
@@ -177,6 +178,7 @@ function Workspace({
   const [docKey, setDocKey] = React.useState(0);
   const [activeMode, setActiveMode] = React.useState<EditorMode>(prefs.defaultMode);
   const [prefsOpen, setPrefsOpen] = React.useState(false);
+  const [outlineOpen, setOutlineOpen] = React.useState(false);
   const [recentFiles, setRecentFiles] = React.useState<string[]>(loadRecentFiles);
   const [home, setHome] = React.useState('');
   // The file on disk changed since we last read/wrote it, and the user hasn't
@@ -231,6 +233,7 @@ function Workspace({
         .then((res) => {
           setMarkup(res.content);
           setFilePath(path);
+          setOutlineOpen(loadOutlineOpen(path));
           setDirty(false);
           setActiveMode(prefs.defaultMode);
           setDocKey((k) => k + 1);
@@ -299,6 +302,7 @@ function Workspace({
     if (!(await confirmDiscard())) return;
     setMarkup('');
     setFilePath(null);
+    setOutlineOpen(false);
     setDirty(false);
     setActiveMode(prefs.defaultMode);
     setDocKey((k) => k + 1);
@@ -309,6 +313,7 @@ function Workspace({
       return saveFile(path, value)
         .then(() => {
           setFilePath(path);
+          if (path !== filePath) saveOutlineOpen(path, outlineOpen);
           markSavedRef.current();
           rememberPath(path);
           // Our version is now on disk (and the watcher baseline is refreshed
@@ -318,7 +323,7 @@ function Workspace({
         })
         .catch((e) => message(e.message, {title: t('saveFailed'), kind: 'error'}));
     },
-    [rememberPath, t],
+    [rememberPath, t, filePath, outlineOpen],
   );
 
   const handleSaveAs = React.useCallback(async () => {
@@ -388,6 +393,22 @@ function Workspace({
     void reloadFromDisk();
   }, [filePath, dirty, confirmDiscard, reloadFromDisk]);
 
+  const handleOutlineChange = React.useCallback((open: boolean) => {
+    setOutlineOpen(open);
+    if (filePath) saveOutlineOpen(filePath, open);
+  }, [filePath]);
+
+  const outlineLabels = React.useMemo(() => ({
+    title: t('outlineTitle'),
+    show: t('outlineShow'),
+    hide: t('outlineHide'),
+    empty: t('outlineEmpty'),
+    untitled: t('outlineUntitled'),
+    expand: t('outlineExpand'),
+    collapse: t('outlineCollapse'),
+    unavailable: t('outlineUnavailable'),
+  }), [t]);
+
   // Dispatch table kept current every render so the one-shot listeners below
   // always invoke fresh closures without re-subscribing.
   const actionsRef = React.useRef<Record<string, () => void>>({});
@@ -402,6 +423,7 @@ function Workspace({
     'toggle-theme': () =>
       onUpdatePrefs({theme: resolvedTheme === 'light' ? 'dark' : 'light'}),
     'toggle-spellcheck': () => onUpdatePrefs({spellcheck: !prefs.spellcheck}),
+    'toggle-outline': () => handleOutlineChange(!outlineOpen),
     quit: handleQuit,
     'recent-clear': clearRecentFiles,
     ...Object.fromEntries(
@@ -506,6 +528,9 @@ function Workspace({
         markup={markup}
         mode={activeMode}
         spellcheck={prefs.spellcheck}
+        outlineOpen={outlineOpen}
+        onOutlineOpenChange={handleOutlineChange}
+        outlineLabels={outlineLabels}
         onDirtyChange={setDirty}
         onSubmit={() => void handleSave()}
         registerGetValue={(fn) => (getValueRef.current = fn)}

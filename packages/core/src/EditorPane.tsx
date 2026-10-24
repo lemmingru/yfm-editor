@@ -1,6 +1,6 @@
 import React from 'react';
 import {createPortal} from 'react-dom';
-import {MarkdownEditorView, useMarkdownEditor} from '@gravity-ui/markdown-editor';
+import {MarkdownEditorView, ToolbarDataType, useMarkdownEditor} from '@gravity-ui/markdown-editor';
 import type {RenderPreview, ToolbarsPreset, ToolbarOrders} from '@gravity-ui/markdown-editor';
 import {LatexExtension} from '@gravity-ui/markdown-editor-latex-extension';
 import {
@@ -31,6 +31,8 @@ import {useMermaid} from '@diplodoc/mermaid-extension/react';
 import {EditorView} from '@codemirror/view';
 import {GitFriendlyFormatting, wysiwygEscapeConfig} from './markdownFormatting';
 import type {EditingMode} from './types';
+import {DocumentOutline, OutlineContext, OutlineToggle, type OutlineLabels} from './DocumentOutline';
+import {OutlineSourceLines} from './outlineModel';
 
 // Keep Diplodoc's full YFM support (including multiline tables) and add rich blocks.
 // `bundle`/`validate` are disabled because we render client-side (no file output).
@@ -57,6 +59,11 @@ const withRichBlocks = (orders: ToolbarOrders): ToolbarOrders =>
 const toolbarsPreset: ToolbarsPreset = {
   items: {
     ...full.items,
+    outline: {
+      view: {type: ToolbarDataType.ReactComponent},
+      wysiwyg: {width: 28, component: OutlineToggle},
+      markup: {width: 28, component: OutlineToggle},
+    },
     mathInline: {
       view: latexInlineItemView,
       wysiwyg: latexInlineItemWysiwyg,
@@ -76,8 +83,8 @@ const toolbarsPreset: ToolbarsPreset = {
   },
   orders: {
     ...full.orders,
-    wysiwygMain: withRichBlocks(full.orders.wysiwygMain),
-    markupMain: withRichBlocks(full.orders.markupMain),
+    wysiwygMain: [['outline'], ...withRichBlocks(full.orders.wysiwygMain)],
+    markupMain: [['outline'], ...withRichBlocks(full.orders.markupMain)],
   },
 };
 
@@ -146,6 +153,9 @@ type Props = {
    * mount; the parent remounts (via key) when this changes.
    */
   spellcheck: boolean;
+  outlineOpen: boolean;
+  onOutlineOpenChange: (open: boolean) => void;
+  outlineLabels: OutlineLabels;
   /** Reports whether the document differs from the last saved/loaded state. */
   onDirtyChange: (dirty: boolean) => void;
   /** Called when the editor emits a submit (Cmd+Enter). */
@@ -402,6 +412,9 @@ export function EditorPane({
   markup,
   mode,
   spellcheck,
+  outlineOpen,
+  onOutlineOpenChange,
+  outlineLabels,
   onDirtyChange,
   onSubmit,
   registerGetValue,
@@ -444,10 +457,18 @@ export function EditorPane({
           loadRuntimeScript: loadMermaidRuntime,
         });
         builder.use(GitFriendlyFormatting);
+        builder.use(OutlineSourceLines);
       },
     },
   });
   const editorRootRef = React.useRef<HTMLDivElement>(null);
+  const outlinePanelId = React.useId();
+  const outlineContext = React.useMemo(() => ({
+    open: outlineOpen,
+    toggle: () => onOutlineOpenChange(!outlineOpen),
+    labels: outlineLabels,
+    panelId: outlinePanelId,
+  }), [outlineOpen, onOutlineOpenChange, outlineLabels, outlinePanelId]);
   const [reloadBannerHost, setReloadBannerHost] = React.useState<HTMLDivElement | null>(null);
   const [reloadBannerPlacementRev, setReloadBannerPlacementRev] = React.useState(0);
 
@@ -579,16 +600,19 @@ export function EditorPane({
   }, [editor]);
 
   return (
-    <>
-      <MarkdownEditorView
-        ref={editorRootRef}
-        className="main__editor"
-        editor={editor}
-        toolbarsPreset={toolbarsPreset}
-        stickyToolbar
-        autofocus
-      />
+    <OutlineContext.Provider value={outlineContext}>
+      <div className="document-workspace">
+        <DocumentOutline editor={editor} editorRoot={editorRootRef} />
+        <MarkdownEditorView
+          ref={editorRootRef}
+          className="main__editor"
+          editor={editor}
+          toolbarsPreset={toolbarsPreset}
+          stickyToolbar
+          autofocus
+        />
+      </div>
       {reloadBanner && reloadBannerHost ? createPortal(reloadBanner, reloadBannerHost) : null}
-    </>
+    </OutlineContext.Provider>
   );
 }

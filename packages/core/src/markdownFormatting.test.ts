@@ -60,6 +60,14 @@ const documents: Record<string, string> = {
   'ranges and units in prose': 'Диапазон 20–60 км/ч, уклон -6 %, 3,58 м/с³.\n',
   'emphasis and code in prose': '**Жирный**, *курсив*, ~~зачёркнутый~~ и `код`.\n',
   'escaped asterisk in prose': 'Escape \\* звёздочка.\n',
+  'inline formula': 'Формула: $x^2 + y^2$.\n',
+  'block formula': '$$E = mc^2\n$$\n',
+  'Mermaid diagram': '```mermaid\ngraph LR\n  A[Редактор] --> B[Предпросмотр]\n```\n',
+  'code containing a shorter fence': '````markdown\n```js\nconst x = 1;\n```\n````\n',
+  'YFM note': '{% note info "Важно" %}\n\nПримечание.\n\n{% endnote %}\n',
+  'YFM cut': '{% cut "Подробности" %}\n\nСкрытый текст.\n\n{% endcut %}\n',
+  'YFM tabs':
+    '{% list tabs %}\n\n- Первая\n\n  Первая вкладка.\n\n- Вторая\n\n  Вторая вкладка.\n\n{% endlist %}\n',
 };
 
 describe('WYSIWYG markdown round-trip', () => {

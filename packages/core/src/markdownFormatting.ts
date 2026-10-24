@@ -1,4 +1,5 @@
 import type {EscapeConfig, ExtensionAuto, SerializerNodeToken} from '@gravity-ui/markdown-editor';
+import {Plugin} from '@gravity-ui/markdown-editor/pm/state';
 import {
   HtmlAttr,
   HtmlNode,
@@ -95,6 +96,14 @@ function precedingBlockEndLine(tokens: {map?: [number, number] | null}[], index:
  * how the document renders, but all of it shows up in `git diff`.
  */
 export const GitFriendlyFormatting: ExtensionAuto = (builder) => {
+  // The upstream image view replaces a failed image with plain Markdown text,
+  // dropping its size/title and marking a freshly opened document as edited.
+  // Offline or protected images must remain editable image nodes: loading is
+  // a view concern and must never rewrite the document.
+  builder.addPlugin(() => new Plugin({
+    filterTransaction: (tr) => tr.getMeta('image-load-failed') === undefined,
+  }));
+
   // Heading text is preceded by `# ` on the line, so `1.`, `-` or `#` at its
   // start cannot open a list, a rule or a nested heading — escaping is noise.
   builder.overrideNodeSerializerSpec(headingNodeName, () => (state, node, parent, index) => {

@@ -2,6 +2,8 @@
 
 **English** | [Русский](README.ru.md)
 
+Version **0.4.0** · [Changelog](CHANGELOG.md)
+
 A native macOS (and cross-platform) editor for Markdown files written in
 [YFM](https://ydocs.tech) (Yandex Flavored Markdown), built on
 [`@gravity-ui/markdown-editor`](https://github.com/gravity-ui/markdown-editor)
@@ -24,8 +26,8 @@ platform-agnostic editor, and `packages/desktop` holds the Tauri application.
 
 ## Requirements
 
-- Node.js 18+ (tested on Node 22)
-- Rust toolchain (`rustup`, stable) — for building the native app
+- Node.js 24 LTS and npm 11.5.1+ (`nvm use` selects the version in `.nvmrc`)
+- Rust 1.90+ (`rustup`, stable) — for building the native app
 - Xcode Command Line Tools (macOS)
 
 ## Install
@@ -123,6 +125,11 @@ To make the app the default Markdown handler: in Finder, right-click a `.md` fil
   and spell checking.
 - Edit in **WYSIWYG** (default) or **markup**, or open the **split preview** using
   the editor toolbar.
+- Use the sidebar button at the start of the toolbar, or **View → Document
+  Outline** (⌥⌘O), to navigate by heading in either editable mode. The outline
+  updates as you edit, highlights the current section, and lets you collapse
+  subsections. It starts hidden and remembers its visibility for each saved file.
+  In narrow windows it overlays the editor and closes after a jump.
 - Unsaved changes show up as a `*` in the window title plus the macOS
   edited-document dot in the close button; the status bar shows the document's
   folder, or "Not saved to disk yet". You are warned before discarding unsaved
