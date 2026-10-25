@@ -1,7 +1,7 @@
 {
   "name": "yfm-editor-monorepo",
   "private": true,
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Monorepo for the YFM editor: a shared platform-agnostic core plus a Tauri desktop app (a VS Code extension is planned).",
   "license": "MIT",
   "author": "Alexey Melekhin",

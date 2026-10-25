@@ -1,7 +1,7 @@
 {
   "name": "@yfm-editor/desktop",
   "private": true,
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Native macOS (and cross-platform) editor for Markdown / YFM files, built on @yfm-editor/core and Tauri 2.",
   "license": "MIT",
   "author": "Alexey Melekhin",

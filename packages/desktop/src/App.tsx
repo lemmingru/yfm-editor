@@ -20,6 +20,7 @@ import {getCurrentWindow} from '@tauri-apps/api/window';
 import {homeDir} from '@tauri-apps/api/path';
 import {ask, message} from '@tauri-apps/plugin-dialog';
 import {EditorPane} from '@yfm-editor/core';
+import {createImageResolver} from './documentImages';
 import type {CopyAgentContextResult} from '@yfm-editor/core';
 import {
   fetchFile,
@@ -173,6 +174,7 @@ function Workspace({
 }) {
   const {t} = useI18n();
   const [filePath, setFilePath] = React.useState<string | null>(null);
+  const resolveImageSrc = React.useMemo(() => createImageResolver(filePath), [filePath]);
   const [markup, setMarkup] = React.useState<string>('');
   const [dirty, setDirty] = React.useState(false);
   const [docKey, setDocKey] = React.useState(0);
@@ -526,6 +528,8 @@ function Workspace({
       <EditorPane
         key={`${docKey}:${activeMode}:${prefs.spellcheck}`}
         markup={markup}
+        resolveImageSrc={resolveImageSrc}
+        imageLabels={{unavailable: t('imageUnavailable'), retry: t('imageRetry')}}
         mode={activeMode}
         spellcheck={prefs.spellcheck}
         outlineOpen={outlineOpen}

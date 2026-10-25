@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "YFM Editor",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "identifier": "com.alxmelekhin.yfmeditor",
   "build": {
     "frontendDist": "../dist",
@@ -23,7 +23,8 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "assetProtocol": {"enable": true, "scope": []}
     }
   },
   "bundle": {

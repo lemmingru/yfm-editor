@@ -2,7 +2,7 @@
 
 **English** | [Русский](README.ru.md)
 
-Version **0.4.0** · [Changelog](CHANGELOG.md)
+Version **0.5.0** · [Changelog](CHANGELOG.md)
 
 A native macOS (and cross-platform) editor for Markdown files written in
 [YFM](https://ydocs.tech) (Yandex Flavored Markdown), built on
@@ -125,6 +125,13 @@ To make the app the default Markdown handler: in Finder, right-click a `.md` fil
   and spell checking.
 - Edit in **WYSIWYG** (default) or **markup**, or open the **split preview** using
   the editor toolbar.
+- Images in WYSIWYG and split preview support HTTP(S) URLs and local files.
+  Relative paths (`./assets/diagram.png`, `../diagram.svg`) resolve from the
+  Markdown file's folder; save a new document first. Absolute paths and `file:`
+  URLs also work. Unavailable images show a placeholder with the original source
+  and a retry button, without changing the Markdown, image dimensions or saved
+  state. Protected attachments still require server access; Tracker sign-in is
+  not integrated yet.
 - Use the sidebar button at the start of the toolbar, or **View → Document
   Outline** (⌥⌘O), to navigate by heading in either editable mode. The outline
   updates as you edit, highlights the current section, and lets you collapse

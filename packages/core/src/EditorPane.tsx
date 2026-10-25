@@ -33,6 +33,10 @@ import {GitFriendlyFormatting, wysiwygEscapeConfig} from './markdownFormatting';
 import type {EditingMode} from './types';
 import {DocumentOutline, OutlineContext, OutlineToggle, type OutlineLabels} from './DocumentOutline';
 import {OutlineSourceLines} from './outlineModel';
+import {
+  DocumentImages, DocumentImagesContext, defaultImageLabels, defaultImageResolver,
+  preparePreviewImages, PreviewImages, type ImageLabels, type ImageSourceResolver,
+} from './documentImages';
 
 // Keep Diplodoc's full YFM support (including multiline tables) and add rich blocks.
 // `bundle`/`validate` are disabled because we render client-side (no file output).
@@ -110,9 +114,15 @@ function renderHtml(markup: string): string {
 }
 
 /** Split-preview pane: renders YFM to HTML and hydrates rich client-side blocks. */
-function Preview({markup}: {markup: string}) {
-  const ref = React.useRef<HTMLDivElement>(null);
-  const html = React.useMemo(() => renderHtml(markup), [markup]);
+export function Preview({markup}: {markup: string}) {
+  const ref = React.useRef<HTMLDivElement | null>(null);
+  const [root, setRoot] = React.useState<HTMLDivElement | null>(null);
+  const attachRoot = React.useCallback((element: HTMLDivElement | null) => {
+    ref.current = element;
+    setRoot(element);
+  }, []);
+  const prepared = React.useMemo(() => preparePreviewImages(renderHtml(markup)), [markup]);
+  const html = prepared.html;
   const runLatex = useLatex();
   const runMermaid = useMermaid();
 
@@ -135,7 +145,11 @@ function Preview({markup}: {markup: string}) {
     if (nodes.length) runMermaid({startOnLoad: false}, {nodes}).catch(() => {});
   }, [html, runMermaid]);
 
-  return <div ref={ref} className="yfm preview" dangerouslySetInnerHTML={{__html: html}} />;
+  return <>
+    <div ref={attachRoot} className="yfm preview"
+      dangerouslySetInnerHTML={{__html: html}} />
+    <PreviewImages root={root} images={prepared.images} />
+  </>;
 }
 
 // The WYSIWYG editor serializes visually-identical documents to slightly
@@ -146,6 +160,8 @@ const normalizeMarkup = (s: string): string => s.replace(/\r\n/g, '\n').replace(
 type Props = {
   /** Initial markup; the component is remounted (via key) when the document changes. */
   markup: string;
+  resolveImageSrc?: ImageSourceResolver;
+  imageLabels?: ImageLabels;
   /** Initial editing mode (wysiwyg / markup); applied at mount. */
   mode: EditingMode;
   /**
@@ -410,6 +426,8 @@ function formatAgentContext(filePath: string, context: AgentContext): string {
 
 export function EditorPane({
   markup,
+  resolveImageSrc,
+  imageLabels = defaultImageLabels,
   mode,
   spellcheck,
   outlineOpen,
@@ -457,6 +475,7 @@ export function EditorPane({
           loadRuntimeScript: loadMermaidRuntime,
         });
         builder.use(GitFriendlyFormatting);
+        builder.use(DocumentImages);
         builder.use(OutlineSourceLines);
       },
     },
@@ -601,18 +620,23 @@ export function EditorPane({
 
   return (
     <OutlineContext.Provider value={outlineContext}>
-      <div className="document-workspace">
-        <DocumentOutline editor={editor} editorRoot={editorRootRef} />
-        <MarkdownEditorView
-          ref={editorRootRef}
-          className="main__editor"
-          editor={editor}
-          toolbarsPreset={toolbarsPreset}
-          stickyToolbar
-          autofocus
-        />
-      </div>
-      {reloadBanner && reloadBannerHost ? createPortal(reloadBanner, reloadBannerHost) : null}
+      <DocumentImagesContext.Provider value={{
+        resolve: resolveImageSrc ?? defaultImageResolver,
+        labels: imageLabels,
+      }}>
+        <div className="document-workspace">
+          <DocumentOutline editor={editor} editorRoot={editorRootRef} />
+          <MarkdownEditorView
+            ref={editorRootRef}
+            className="main__editor"
+            editor={editor}
+            toolbarsPreset={toolbarsPreset}
+            stickyToolbar
+            autofocus
+          />
+        </div>
+        {reloadBanner && reloadBannerHost ? createPortal(reloadBanner, reloadBannerHost) : null}
+      </DocumentImagesContext.Provider>
     </OutlineContext.Provider>
   );
 }

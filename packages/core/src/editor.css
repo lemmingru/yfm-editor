@@ -174,6 +174,46 @@
   overflow: auto;
 }
 
+.document-image img {
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.document-image--failed img {
+  display: none;
+}
+
+.document-image-placeholder {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: min(240px, 100%);
+  padding: 16px;
+  border: 1px dashed var(--g-color-line-generic);
+  border-radius: 8px;
+  background: var(--g-color-base-generic);
+  color: var(--g-color-text-secondary);
+  font: 13px/1.5 var(--g-font-family-sans);
+  white-space: normal;
+  vertical-align: middle;
+}
+
+.document-image-placeholder__source {
+  overflow-wrap: anywhere;
+}
+
+.document-image-placeholder button {
+  align-self: flex-start;
+  color: var(--g-color-text-link);
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
 /* Dark YFM/code theme: the bundled highlight palette is tuned for light UI,
  * so code blocks otherwise inherit low-contrast token colors on dark surfaces. */
 body.g-root_theme_dark .yfm {

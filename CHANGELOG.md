@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.5.0] - 2026-10-25
+
+### Added
+
+- Local images in WYSIWYG and split preview. Relative paths resolve from the
+  Markdown file's folder; absolute paths and `file:` URLs are also supported.
+  Encoded paths, Unicode filenames, and SVG fragments work alongside HTTP(S)
+  image URLs.
+- Localized placeholders for unavailable images, showing the original source
+  and a retry button. Loading failures and retries preserve the Markdown,
+  image dimensions, titles, links, and the document's saved state.
+- Regression coverage for local and remote images, missing files, retrying,
+  preview updates, and changes to the document location.
+
+### Changed
+
+- Local image paths are resolved again after saving a document in another
+  folder. Late loading results from the previous location are ignored.
+- The desktop app serves local images through Tauri's asset protocol with
+  access granted per image file. Resolved URLs remain in the display layer
+  rather than being written back to the document.
+
 ## [0.4.0] - 2026-10-24
 
 ### Added

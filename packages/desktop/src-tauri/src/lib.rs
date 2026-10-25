@@ -1,4 +1,5 @@
 mod files;
+mod images;
 mod menu;
 mod platform;
 mod state;
@@ -7,6 +8,7 @@ mod windows;
 use tauri::{Emitter, Manager};
 
 use crate::files::{read_file, unwatch_file, watch_file, write_file};
+use crate::images::resolve_image;
 use crate::menu::{
     build_app_menu, set_menu_labels, set_spellcheck_checked, update_recent_files_menu, MenuLabels,
 };
@@ -80,6 +82,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             read_file,
+            resolve_image,
             write_file,
             update_recent_files_menu,
             set_menu_labels,

@@ -35,6 +35,8 @@ export type MenuLabels = {
 
 const messages = {
   en: {
+    imageUnavailable: 'Image unavailable',
+    imageRetry: 'Retry',
     outlineTitle: 'Document outline',
     outlineShow: 'Show document outline',
     outlineHide: 'Hide document outline',
@@ -81,6 +83,8 @@ const messages = {
     openBehaviorHint: 'New window is the native macOS behavior for documents.',
   },
   ru: {
+    imageUnavailable: 'Изображение недоступно',
+    imageRetry: 'Повторить загрузку',
     outlineTitle: 'Структура документа',
     outlineShow: 'Показать структуру документа',
     outlineHide: 'Скрыть структуру документа',
