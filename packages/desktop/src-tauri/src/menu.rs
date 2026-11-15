@@ -40,6 +40,9 @@ pub(crate) struct MenuLabels {
     zoom: String,
     bring_all_to_front: String,
     view: String,
+    zoom_in: String,
+    zoom_out: String,
+    zoom_reset: String,
     toggle_theme: String,
     spell_check: String,
     toggle_outline: String,
@@ -72,6 +75,9 @@ impl Default for MenuLabels {
             zoom: "Zoom".into(),
             bring_all_to_front: "Bring All to Front".into(),
             view: "View".into(),
+            zoom_in: "Zoom In".into(),
+            zoom_out: "Zoom Out".into(),
+            zoom_reset: "Actual Size".into(),
             toggle_theme: "Toggle Theme".into(),
             spell_check: "Check Spelling".into(),
             toggle_outline: "Document Outline".into(),
@@ -236,6 +242,15 @@ pub(crate) fn build_app_menu(
         .separator()
         .bring_all_to_front_with_text(&labels.bring_all_to_front)
         .build()?;
+    let zoom_in = MenuItemBuilder::with_id("zoom-in", &labels.zoom_in)
+        .accelerator("CmdOrCtrl+=")
+        .build(app)?;
+    let zoom_out = MenuItemBuilder::with_id("zoom-out", &labels.zoom_out)
+        .accelerator("CmdOrCtrl+-")
+        .build(app)?;
+    let zoom_reset = MenuItemBuilder::with_id("zoom-reset", &labels.zoom_reset)
+        .accelerator("CmdOrCtrl+0")
+        .build(app)?;
     let toggle_theme = MenuItemBuilder::with_id("toggle-theme", &labels.toggle_theme)
         .accelerator("CmdOrCtrl+Shift+L")
         .build(app)?;
@@ -246,6 +261,10 @@ pub(crate) fn build_app_menu(
         .accelerator("CmdOrCtrl+Alt+O")
         .build(app)?;
     let view_menu = SubmenuBuilder::new(app, &labels.view)
+        .item(&zoom_in)
+        .item(&zoom_out)
+        .item(&zoom_reset)
+        .separator()
         .item(&toggle_outline)
         .item(&toggle_theme)
         .separator()

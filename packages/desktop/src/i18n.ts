@@ -28,6 +28,9 @@ export type MenuLabels = {
   zoom: string;
   bringAllToFront: string;
   view: string;
+  zoomIn: string;
+  zoomOut: string;
+  zoomReset: string;
   toggleTheme: string;
   spellCheck: string;
   toggleOutline: string;
@@ -52,6 +55,7 @@ const messages = {
     saveFailed: 'Save failed',
     untitled: 'Untitled',
     unsavedLocation: 'Not saved to disk yet',
+    documentZoom: 'Document zoom',
     fileReloadedToast: 'File updated from disk.',
     fileChangedBanner: 'The file changed on disk. You have unsaved changes.',
     reload: 'Discard and Reload',
@@ -100,6 +104,7 @@ const messages = {
     saveFailed: 'Не удалось сохранить',
     untitled: 'Без названия',
     unsavedLocation: 'Ещё не сохранён на диск',
+    documentZoom: 'Масштаб документа',
     fileReloadedToast: 'Файл обновлён с диска.',
     fileChangedBanner: 'Файл изменён на диске. У вас есть несохранённые правки.',
     reload: 'Отбросить и загрузить',
@@ -158,6 +163,9 @@ const menuLabels: Record<Lang, MenuLabels> = {
     zoom: 'Zoom',
     bringAllToFront: 'Bring All to Front',
     view: 'View',
+    zoomIn: 'Zoom In',
+    zoomOut: 'Zoom Out',
+    zoomReset: 'Actual Size',
     toggleTheme: 'Toggle Theme',
     spellCheck: 'Check Spelling',
     toggleOutline: 'Document Outline',
@@ -187,6 +195,9 @@ const menuLabels: Record<Lang, MenuLabels> = {
     zoom: 'Масштаб',
     bringAllToFront: 'Все окна на передний план',
     view: 'Вид',
+    zoomIn: 'Увеличить масштаб',
+    zoomOut: 'Уменьшить масштаб',
+    zoomReset: 'Фактический размер',
     toggleTheme: 'Переключить тему',
     spellCheck: 'Проверка орфографии',
     toggleOutline: 'Структура документа',

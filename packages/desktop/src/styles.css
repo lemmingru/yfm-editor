@@ -12,6 +12,29 @@ body,
   overflow: hidden;
 }
 
+.app .main__editor .cm-content {
+  font-size: calc(var(--g-text-code-2-font-size) * var(--document-zoom));
+  line-height: calc(var(--g-text-code-2-line-height) * var(--document-zoom));
+}
+
+/* Base sizes from Diplodoc's YFM stylesheet. */
+.app .main__editor :is(.yfm-editor, .yfm.preview) {
+  --yfm-font-size: calc(15px * var(--document-zoom));
+  --yfm-font-line-height: calc(20px * var(--document-zoom));
+  --yfm-font-size-h1: calc(32px * var(--document-zoom));
+  --yfm-font-line-height-h1: calc(40px * var(--document-zoom));
+  --yfm-font-size-h2: calc(24px * var(--document-zoom));
+  --yfm-font-line-height-h2: calc(28px * var(--document-zoom));
+  --yfm-font-size-h3: calc(20px * var(--document-zoom));
+  --yfm-font-line-height-h3: calc(24px * var(--document-zoom));
+  --yfm-font-size-h4: calc(17px * var(--document-zoom));
+  --yfm-font-line-height-h4: calc(24px * var(--document-zoom));
+  --yfm-font-size-h5: calc(15px * var(--document-zoom));
+  --yfm-font-line-height-h5: calc(20px * var(--document-zoom));
+  --yfm-font-size-h6: calc(13px * var(--document-zoom));
+  --yfm-font-line-height-h6: calc(18px * var(--document-zoom));
+}
+
 /* Reload banner: shown under the editor toolbar when the open file is changed
  * on disk while the document has unsaved edits. Rendered by the shell into the
  * `.reload-banner-slot` host that the editor places under its toolbar. */
@@ -49,6 +72,7 @@ body,
   flex: 0 0 auto;
   display: flex;
   align-items: center;
+  gap: 8px;
   min-height: 22px;
   padding: 2px 12px;
   font-size: 12px;
@@ -56,6 +80,12 @@ body,
   color: var(--g-color-text-secondary);
   background: var(--g-color-base-generic);
   border-top: 1px solid var(--g-color-line-generic);
+}
+
+.statusbar__zoom {
+  flex-shrink: 0;
+  margin-inline-start: auto;
+  font-variant-numeric: tabular-nums;
 }
 
 .statusbar__path {

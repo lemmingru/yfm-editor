@@ -125,6 +125,9 @@ To make the app the default Markdown handler: in Finder, right-click a `.md` fil
   and spell checking.
 - Edit in **WYSIWYG** (default) or **markup**, or open the **split preview** using
   the editor toolbar.
+- Use **View ▸ Zoom In** (⌘+ or ⌘=), **Zoom Out** (⌘−), or **Actual Size** (⌘0)
+  to resize document text in the current window. On Windows and Linux, use
+  Ctrl in place of ⌘.
 - Images in WYSIWYG and split preview support HTTP(S) URLs and local files.
   Relative paths (`./assets/diagram.png`, `../diagram.svg`) resolve from the
   Markdown file's folder; save a new document first. Absolute paths and `file:`

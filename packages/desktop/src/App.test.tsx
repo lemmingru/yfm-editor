@@ -171,6 +171,31 @@ describe('desktop application workflow', () => {
     expect(mocks.setDocumentEdited).toHaveBeenLastCalledWith(false);
   });
 
+  it('changes document zoom from the View menu and keyboard without remounting the editor', async () => {
+    const {container} = render(<App />);
+    const editor = screen.getByTestId('markup');
+    const zoom = screen.getByRole('status', {name: 'documentZoom'});
+    expect(zoom).toHaveTextContent('100%');
+
+    await act(async () => {
+      const menuAction = mocks.windowListeners.get('menu-action')!;
+      menuAction({payload: 'zoom-in'});
+      menuAction({payload: 'zoom-in'});
+    });
+    expect(zoom).toHaveTextContent('125%');
+    expect(container.querySelector<HTMLElement>('.app')?.style.getPropertyValue('--document-zoom')).toBe('1.25');
+
+    const modifier = navigator.platform.startsWith('Mac') ? {metaKey: true} : {ctrlKey: true};
+    fireEvent.keyDown(editor, {key: '+', shiftKey: true, ...modifier});
+    expect(zoom).toHaveTextContent('150%');
+    fireEvent.keyDown(editor, {key: '-', ...modifier});
+    expect(zoom).toHaveTextContent('125%');
+    fireEvent.keyDown(editor, {key: '0', ...modifier});
+    expect(zoom).toHaveTextContent('100%');
+    expect(screen.getByTestId('markup')).toBe(editor);
+    expect(mocks.setDocumentEdited).toHaveBeenLastCalledWith(false);
+  });
+
   it('shows the external-change banner instead of overwriting dirty content', async () => {
     mocks.frontendReady.mockResolvedValue(['/cold.md']);
     render(<App />);

@@ -60,6 +60,8 @@ import {
 
 const toaster = new Toaster();
 let configuredLang: ReturnType<typeof resolveLang> | null = null;
+const ZOOM_LEVELS = [75, 90, 100, 110, 125, 150, 175, 200];
+const DEFAULT_ZOOM_INDEX = ZOOM_LEVELS.indexOf(100);
 
 function basename(p: string): string {
   return p.split(/[/\\]/).pop() || p;
@@ -179,6 +181,8 @@ function Workspace({
   const [dirty, setDirty] = React.useState(false);
   const [docKey, setDocKey] = React.useState(0);
   const [activeMode, setActiveMode] = React.useState<EditorMode>(prefs.defaultMode);
+  const [zoomIndex, setZoomIndex] = React.useState(DEFAULT_ZOOM_INDEX);
+  const zoomPercent = ZOOM_LEVELS[zoomIndex];
   const [prefsOpen, setPrefsOpen] = React.useState(false);
   const [outlineOpen, setOutlineOpen] = React.useState(false);
   const [recentFiles, setRecentFiles] = React.useState<string[]>(loadRecentFiles);
@@ -422,6 +426,9 @@ function Workspace({
     revert: handleRevert,
     'copy-agent-context': () => void handleCopyAgentContext(),
     preferences: () => setPrefsOpen(true),
+    'zoom-in': () => setZoomIndex((index) => Math.min(index + 1, ZOOM_LEVELS.length - 1)),
+    'zoom-out': () => setZoomIndex((index) => Math.max(index - 1, 0)),
+    'zoom-reset': () => setZoomIndex(DEFAULT_ZOOM_INDEX),
     'toggle-theme': () =>
       onUpdatePrefs({theme: resolvedTheme === 'light' ? 'dark' : 'light'}),
     'toggle-spellcheck': () => onUpdatePrefs({spellcheck: !prefs.spellcheck}),
@@ -434,6 +441,40 @@ function Workspace({
   };
   const openFromOsRef = React.useRef(openFromOs);
   openFromOsRef.current = openFromOs;
+
+  React.useEffect(() => {
+    const isMac = navigator.platform.startsWith('Mac');
+    const handleZoomShortcut = (event: KeyboardEvent) => {
+      if (
+        event.isComposing ||
+        event.altKey ||
+        (isMac ? !event.metaKey || event.ctrlKey : !event.ctrlKey || event.metaKey)
+      ) return;
+
+      let action: 'zoom-in' | 'zoom-out' | 'zoom-reset';
+      switch (event.key) {
+        case '+':
+        case '=':
+          action = 'zoom-in';
+          break;
+        case '-':
+          action = 'zoom-out';
+          break;
+        case '0':
+          action = 'zoom-reset';
+          break;
+        default:
+          return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      actionsRef.current[action]?.();
+    };
+    // Native accelerators handle the menu keys. The WebView can also receive
+    // variants such as Shift+= (plus) or keys on the numeric keypad.
+    window.addEventListener('keydown', handleZoomShortcut, true);
+    return () => window.removeEventListener('keydown', handleZoomShortcut, true);
+  }, []);
 
   // Wire native menu events, OS file-open events, and external file-change
   // notifications (subscribe once). Scope to the current window: the backend
@@ -524,7 +565,7 @@ function Workspace({
   }, []);
 
   return (
-    <div className="app">
+    <div className="app" style={{'--document-zoom': zoomPercent / 100} as React.CSSProperties}>
       <EditorPane
         key={`${docKey}:${activeMode}:${prefs.spellcheck}`}
         markup={markup}
@@ -565,6 +606,9 @@ function Workspace({
         ) : (
           <span className="statusbar__path statusbar__path_muted">{t('unsavedLocation')}</span>
         )}
+        <output className="statusbar__zoom" aria-label={t('documentZoom')}>
+          {zoomPercent}%
+        </output>
       </footer>
       <PreferencesModal
         open={prefsOpen}
