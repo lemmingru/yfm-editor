@@ -1,6 +1,6 @@
 [package]
 name = "yfm-editor"
-version = "0.5.0"
+version = "0.5.1"
 description = "Native YFM markdown editor"
 authors = ["Alexey Melekhin"]
 license = "MIT"

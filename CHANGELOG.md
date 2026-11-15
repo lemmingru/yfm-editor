@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.5.1] - 2026-11-15
+
+### Added
+
+- Document text zoom from 75% to 200% in WYSIWYG, Markdown, and preview. Use the
+  **View** menu or ⌘+ (or ⌘=), ⌘−, and ⌘0 on macOS. The status bar shows the
+  current zoom for each window.
+
+### Changed
+
+- The desktop app bundles Inter fonts for offline startup and includes the
+  third-party license notices.
+
 ## [0.5.0] - 2026-10-25
 
 ### Added

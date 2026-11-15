@@ -2,7 +2,7 @@
 
 **English** | [Русский](README.ru.md)
 
-Version **0.5.0** · [Changelog](CHANGELOG.md)
+Version **0.5.1** · [Changelog](CHANGELOG.md)
 
 A native macOS (and cross-platform) editor for Markdown files written in
 [YFM](https://ydocs.tech) (Yandex Flavored Markdown), built on
