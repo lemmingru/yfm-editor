@@ -2,8 +2,9 @@
 // platform shell via `@yfm-editor/core/styles`. Keeps every consumer in sync
 // with the exact set of vendor styles the editor and preview rely on.
 
-// Gravity UI base styles + fonts.
-import '@gravity-ui/uikit/styles/fonts.css';
+// Bundle the Inter weights used by Gravity UI for offline startup.
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/600.css';
 import '@gravity-ui/uikit/styles/styles.css';
 // Markdown editor styles (wysiwyg, markup, yfm overrides).
 import '@gravity-ui/markdown-editor/styles/styles.css';
